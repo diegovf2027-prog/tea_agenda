@@ -1,0 +1,175 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+# Libraries should not include pubspec.lock, per https://dart.dev/guides/libraries/private-files#pubspeclock
+pubspec.lock
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+build/
+flutter_*.png
+flutter_*.jpg
+flutter_*.jpeg
+flutter_*.gif
+flutter_*.webp
+flutter_*.ico
+flutter_*.bmp
+flutter_*.svg
+coverage/
+lib/generated_plugin_registrant.dart
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android related
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+
+# iOS/XCode related
+**/ios/*/Runner.xcworkspace/xcuserdata/
+**/ios/*/Runner.xcworkspace/project.xcworkspace/xcuserdata/
+**/ios/*/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+**/ios/*/Runner.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+**/ios/*/Runner.xcworkspace/xcshareddata/WorkspaceState.xcsettings
+**/ios/*/Pods/
+**/ios/*/Flutter/ephemeral/
+**/ios/*/Flutter/Flutter.framework
+**/ios/*/Flutter/Flutter.podspec
+**/ios/*/Flutter/Generated.xcconfig
+**/ios/*/Flutter/app.flx
+**/ios/*/Flutter/app.zip
+**/ios/*/Flutter/flutter_assets/
+**/ios/*/Flutter/flutter_export_environment.sh
+**/ios/*/Flutter/GeneratedPluginRegistrant.h
+**/ios/*/Flutter/GeneratedPluginRegistrant.m
+**/ios/*/Flutter/Flutter-Debug.xcconfig
+**/ios/*/Flutter/Flutter-Release.xcconfig
+**/ios/*/Flutter/Flutter-Assets.xcconfig
+**/ios/*/Pods/
+**/ios/*/Runner.xcodeproj/xcuserdata/
+**/ios/*/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/ios/*/Runner.xcodeproj/xcshareddata/IDEWorkspaceChecks.plist
+**/ios/*/Runner.xcodeproj/xcshareddata/WorkspaceSettings.xcsettings
+**/ios/*/Runner.xcodeproj/xcshareddata/WorkspaceState.xcsettings
+**/ios/*/RunnerTests/
+**/ios/*/.generated/
+
+# macOS
+**/macos/Flutter/ephemeral/
+**/macos/Flutter/Flutter.framework
+**/macos/Flutter/Flutter.podspec
+**/macos/Flutter/Generated.xcconfig
+**/macos/Flutter/app.flx
+**/macos/Flutter/app.zip
+**/macos/Flutter/flutter_assets/
+**/macos/Flutter/flutter_export_environment.sh
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/macos/Flutter/Flutter-Debug.xcconfig
+**/macos/Flutter/Flutter-Release.xcconfig
+**/macos/Flutter/Flutter-Assets.xcconfig
+**/macos/Flutter/GeneratedPluginRegistrant.h
+**/macos/Flutter/GeneratedPluginRegistrant.m
+**/macos/*/.generated/
+**/macos/*/Runner.xcodeproj/xcuserdata/
+**/macos/*/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/macos/*/Runner.xcodeproj/xcshareddata/IDEWorkspaceChecks.plist
+**/macos/*/Runner.xcodeproj/xcshareddata/WorkspaceSettings.xcsettings
+**/macos/*/Runner.xcodeproj/xcshareddata/WorkspaceState.xcsettings
+**/macos/*/RunnerTests/
+**/macos/*/.generated/
+
+# Windows
+**/windows/*/flutter/ephemeral/
+**/windows/*/flutter/Flutter.framework
+**/windows/*/flutter/Flutter.podspec
+**/windows/*/flutter/Generated.xcconfig
+**/windows/*/flutter/app.flx
+**/windows/*/flutter/app.zip
+**/windows/*/flutter/flutter_assets/
+**/windows/*/flutter/flutter_export_environment.sh
+**/windows/*/flutter/GeneratedPluginRegistrant.cc
+**/windows/*/flutter/GeneratedPluginRegistrant.h
+**/windows/*/flutter/Flutter-Debug.xcconfig
+**/windows/*/flutter/Flutter-Release.xcconfig
+**/windows/*/flutter/Flutter-Assets.xcconfig
+**/windows/*/flutter/GeneratedPluginRegistrant.h
+**/windows/*/flutter/GeneratedPluginRegistrant.m
+**/windows/*/.generated/
+**/windows/*/Runner.xcodeproj/xcuserdata/
+**/windows/*/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/windows/*/Runner.xcodeproj/xcshareddata/IDEWorkspaceChecks.plist
+**/windows/*/Runner.xcodeproj/xcshareddata/WorkspaceSettings.xcsettings
+**/windows/*/Runner.xcodeproj/xcshareddata/WorkspaceState.xcsettings
+**/windows/*/RunnerTests/
+**/windows/*/.generated/
+
+# Linux
+**/linux/*/flutter/ephemeral/
+**/linux/*/flutter/Flutter.framework
+**/linux/*/flutter/Flutter.podspec
+**/linux/*/flutter/Generated.xcconfig
+**/linux/*/flutter/app.flx
+**/linux/*/flutter/app.zip
+**/linux/*/flutter/flutter_assets/
+**/linux/*/flutter/flutter_export_environment.sh
+**/linux/*/flutter/GeneratedPluginRegistrant.cc
+**/linux/*/flutter/GeneratedPluginRegistrant.h
+**/linux/*/flutter/Flutter-Debug.xcconfig
+**/linux/*/flutter/Flutter-Release.xcconfig
+**/linux/*/flutter/Flutter-Assets.xcconfig
+**/linux/*/flutter/GeneratedPluginRegistrant.h
+**/linux/*/flutter/GeneratedPluginRegistrant.m
+**/linux/*/.generated/
+**/linux/*/Runner.xcodeproj/xcuserdata/
+**/linux/*/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/linux/*/Runner.xcodeproj/xcshareddata/IDEWorkspaceChecks.plist
+**/linux/*/Runner.xcodeproj/xcshareddata/WorkspaceSettings.xcsettings
+**/linux/*/Runner.xcodeproj/xcshareddata/WorkspaceState.xcsettings
+**/linux/*/RunnerTests/
+**/linux/*/.generated/
+
+# Web
+**/web/icons/
+**/web/favicon.png
+
+# Exceptions to above rules.
+!**/ios/**/default.mode1v3
+!**/ios/**/default.mode2v3
+!**/ios/**/default.pbxuser
+!**/ios/**/default.perspectivev3
+!**/macos/**/default.mode1v3
+!**/macos/**/default.mode2v3
+!**/macos/**/default.pbxuser
+!**/macos/**/default.perspectivev3
+!**/windows/**/default.mode1v3
+!**/windows/**/default.mode2v3
+!**/macos/**/default.pbxuser
+!**/windows/**/default.pbxuser
+!**/linux/**/default.mode1v3
+!**/linux/**/default.mode2v3
+!**/linux/**/default.pbxuser
+!**/linux/**/default.perspectivev3
