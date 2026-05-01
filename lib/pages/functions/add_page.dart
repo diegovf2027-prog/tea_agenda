@@ -40,6 +40,7 @@ class _AddPageState extends State<AddPage> {
     super.dispose();
   }
 
+  // Função de Salvar o Registro
   void _salvarRegistro() {
     if (_alimentacao == null || _atividades == null || _comportamento == null) {
       ScaffoldMessenger.of(context).showSnackBar(
