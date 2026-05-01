@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:drift/drift.dart' as d;   // Não ter conflito com o Material
+import 'package:drift/drift.dart' as d; // Não ter conflito com o Material
 import 'package:tea_agenda/data/local/database.dart';
 import 'package:provider/provider.dart';
 
@@ -36,17 +36,21 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
   }
 
   Future<void> _selecionarData(BuildContext context) async {
-    final DateTime? data_selecionada = await showDatePicker(
+    final DateTime? dataSelecionada = await showDatePicker(
       context: context,
       initialDate: _dataNascimento ?? DateTime(2015),
       firstDate: DateTime(2010),
       lastDate: DateTime.now(),
     );
-    if (data_selecionada != null) setState(() => _dataNascimento = data_selecionada);
+    if (dataSelecionada != null)
+      setState(() => _dataNascimento = dataSelecionada);
   }
 
   void _salvarAluno() async {
-    if (_formKey.currentState!.validate() && _dataNascimento != null && _turmaAluno != null && _cuidadorIdSelecionada != null) {
+    if (_formKey.currentState!.validate() &&
+        _dataNascimento != null &&
+        _turmaAluno != null &&
+        _cuidadorIdSelecionada != null) {
       final database = Provider.of<AppDatabase>(context, listen: false);
 
       final novoAluno = AlunosCompanion(
@@ -59,9 +63,11 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
       );
 
       if (widget.alunoEdicao != null) {
-        await database.update(database.alunos).replace(
-          novoAluno.copyWith(aluId: d.Value(widget.alunoEdicao!.aluId)),
-        );
+        await database
+            .update(database.alunos)
+            .replace(
+              novoAluno.copyWith(aluId: d.Value(widget.alunoEdicao!.aluId)),
+            );
       } else {
         await database.into(database.alunos).insert(novoAluno);
       }
@@ -69,7 +75,14 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.alunoEdicao != null ? 'Aluno atualizado!' : 'Aluno cadastrado!'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(
+            widget.alunoEdicao != null
+                ? 'Aluno atualizado!'
+                : 'Aluno cadastrado!',
+          ),
+          backgroundColor: Colors.green,
+        ),
       );
     } else {
       String erro = "Preencha todos os campos corretamente!";
@@ -83,10 +96,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(erro),
-          backgroundColor: Colors.red
-        ),
+        SnackBar(content: Text(erro), backgroundColor: Colors.red),
       );
     }
   }
@@ -96,7 +106,9 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
     final database = Provider.of<AppDatabase>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.alunoEdicao != null ? 'Editar Aluno' : 'Novo Aluno')),
+      appBar: AppBar(
+        title: Text(widget.alunoEdicao != null ? 'Editar Aluno' : 'Novo Aluno'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -105,22 +117,30 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
             children: [
               TextFormField(
                 controller: _nomeController,
-                decoration: const InputDecoration(labelText: 'Nome do Aluno', prefixIcon: Icon(Icons.child_care)),
+                decoration: const InputDecoration(
+                  labelText: 'Nome do Aluno',
+                  prefixIcon: Icon(Icons.child_care),
+                ),
                 validator: (v) => v!.isEmpty ? 'informe o nome do aluno' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _cpfController,
-                decoration: const InputDecoration(labelText: 'CPF', prefixIcon: Icon(Icons.badge)),
+                decoration: const InputDecoration(
+                  labelText: 'CPF',
+                  prefixIcon: Icon(Icons.badge),
+                ),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 12),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.calendar_today),
-                title: Text(_dataNascimento == null
-                  ? "Selecionar Data de Nascimento"
-                  : "Nascimento: ${_dataNascimento!.day}/${_dataNascimento!.month}/${_dataNascimento!.year}"),
+                title: Text(
+                  _dataNascimento == null
+                      ? "Selecionar Data de Nascimento"
+                      : "Nascimento: ${_dataNascimento!.day}/${_dataNascimento!.month}/${_dataNascimento!.year}",
+                ),
                 onTap: () => _selecionarData(context),
               ),
               const SizedBox(height: 12),
@@ -128,10 +148,20 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                 stream: database.watchEscolas(),
                 builder: (context, snapshot) {
                   final escolas = snapshot.data ?? [];
-                  return DropdownButtonFormField<int> (
-                    value: _escolaIdSelecionada,
-                    decoration: const InputDecoration(labelText: 'Escola vinculada', prefixIcon: Icon(Icons.school)),
-                    items: escolas.map((e) => DropdownMenuItem(value: e.escId, child: Text(e.escNome))).toList(),
+                  return DropdownButtonFormField<int>(
+                    initialValue: _escolaIdSelecionada,
+                    decoration: const InputDecoration(
+                      labelText: 'Escola vinculada',
+                      prefixIcon: Icon(Icons.school),
+                    ),
+                    items: escolas
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e.escId,
+                            child: Text(e.escNome),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (val) {
                       setState(() {
                         _escolaIdSelecionada = val;
@@ -141,16 +171,16 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                     },
                     validator: (v) => v == null ? 'Selecione uma escola' : null,
                   );
-                }
+                },
               ),
               StreamBuilder<List<Turma>>(
                 stream: _escolaIdSelecionada != null
-                  ? database.watchTurmasPorEscola(_escolaIdSelecionada)
-                  : const Stream.empty(),
+                    ? database.watchTurmasPorEscola(_escolaIdSelecionada)
+                    : const Stream.empty(),
                 builder: (context, snapshot) {
                   final turmas = snapshot.data ?? [];
                   return DropdownButtonFormField<int>(
-                    value: _turmaAluno,
+                    initialValue: _turmaAluno,
                     decoration: const InputDecoration(
                       labelText: 'Turma',
                       prefixIcon: Icon(Icons.groups_3),
@@ -161,34 +191,54 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                         child: Text(t.turNumero.toString()),
                       );
                     }).toList(),
-                    onChanged: _escolaIdSelecionada == null ? null : (val) {
-                      setState(() => _turmaAluno = val);
-                    },
+                    onChanged: _escolaIdSelecionada == null
+                        ? null
+                        : (val) {
+                            setState(() => _turmaAluno = val);
+                          },
                     validator: (v) => v == null ? 'Selecione a turma' : null,
                   );
-                }
+                },
               ),
               const SizedBox(height: 12),
               StreamBuilder<List<Usuario>>(
                 stream: _escolaIdSelecionada != null
-                  ? database.watchCuidadoresPorEscola(_escolaIdSelecionada!)
-                  : const Stream.empty(),
+                    ? database.watchCuidadoresPorEscola(_escolaIdSelecionada!)
+                    : const Stream.empty(),
                 builder: (context, snapshot) {
                   final cuidadores = snapshot.data ?? [];
-                  return DropdownButtonFormField<int> (
-                    value: _cuidadorIdSelecionada,
-                    decoration: const InputDecoration(labelText: 'Cuidador responsável', prefixIcon: Icon(Icons.person_pin)),
-                    items: cuidadores.map((e) => DropdownMenuItem(value: e.usuId, child: Text(e.usuNome))).toList(),
-                    onChanged: (val) => setState(() => _cuidadorIdSelecionada = val),
-                    validator: (v) => v == null ? 'Selecione um cuidador' : null,
+                  return DropdownButtonFormField<int>(
+                    initialValue: _cuidadorIdSelecionada,
+                    decoration: const InputDecoration(
+                      labelText: 'Cuidador responsável',
+                      prefixIcon: Icon(Icons.person_pin),
+                    ),
+                    items: cuidadores
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e.usuId,
+                            child: Text(e.usuNome),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) =>
+                        setState(() => _cuidadorIdSelecionada = val),
+                    validator: (v) =>
+                        v == null ? 'Selecione um cuidador' : null,
                   );
-                }
+                },
               ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _salvarAluno,
-                style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                child: Text(widget.alunoEdicao != null ? 'Salvar Alterações' : 'Cadastrar Aluno'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: Text(
+                  widget.alunoEdicao != null
+                      ? 'Salvar Alterações'
+                      : 'Cadastrar Aluno',
+                ),
               ),
             ],
           ),

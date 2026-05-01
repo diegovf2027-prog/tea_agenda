@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:drift/drift.dart' as d;   // Não ter conflito com o Material
+import 'package:drift/drift.dart' as d; // Não ter conflito com o Material
 import 'package:tea_agenda/data/local/database.dart';
 import 'package:provider/provider.dart';
 
@@ -34,7 +34,11 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
   }
 
   void _salvarTurma() async {
-    if (_formKey.currentState!.validate() && _turnoSelecionado != null && _anoSelecionado != null && _escolaIdSelecionada != null && _professorIdSelecionado != null) {
+    if (_formKey.currentState!.validate() &&
+        _turnoSelecionado != null &&
+        _anoSelecionado != null &&
+        _escolaIdSelecionada != null &&
+        _professorIdSelecionado != null) {
       final database = Provider.of<AppDatabase>(context, listen: false);
 
       final novaTurma = TurmasCompanion(
@@ -42,13 +46,15 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
         turTurno: d.Value(_turnoSelecionado!),
         turAno: d.Value(_anoSelecionado!),
         turEscola: d.Value(_escolaIdSelecionada!),
-        turProfessorId: d.Value(_professorIdSelecionado!), 
+        turProfessorId: d.Value(_professorIdSelecionado!),
       );
 
       if (widget.turmaEdicao != null) {
-        await database.update(database.turmas).replace(
-          novaTurma.copyWith(turId: d.Value(widget.turmaEdicao!.turId)),
-        );
+        await database
+            .update(database.turmas)
+            .replace(
+              novaTurma.copyWith(turId: d.Value(widget.turmaEdicao!.turId)),
+            );
       } else {
         await database.into(database.turmas).insert(novaTurma);
       }
@@ -56,7 +62,14 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.turmaEdicao != null ? 'Turma atualizada!' : 'Turma cadastrada!'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(
+            widget.turmaEdicao != null
+                ? 'Turma atualizada!'
+                : 'Turma cadastrada!',
+          ),
+          backgroundColor: Colors.green,
+        ),
       );
     } else {
       String erro = "Preencha todos os campos corretamente!";
@@ -72,10 +85,7 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(erro),
-          backgroundColor: Colors.red
-        ),
+        SnackBar(content: Text(erro), backgroundColor: Colors.red),
       );
     }
   }
@@ -85,7 +95,9 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
     final database = Provider.of<AppDatabase>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.turmaEdicao != null ? 'Editar Turma' : 'Nova Turma')),
+      appBar: AppBar(
+        title: Text(widget.turmaEdicao != null ? 'Editar Turma' : 'Nova Turma'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -94,24 +106,39 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
             children: [
               TextFormField(
                 controller: _numeroController,
-                decoration: const InputDecoration(labelText: 'Número da Turma', prefixIcon: Icon(Icons.door_front_door)),
+                decoration: const InputDecoration(
+                  labelText: 'Número da Turma',
+                  prefixIcon: Icon(Icons.door_front_door),
+                ),
                 validator: (v) => v!.isEmpty ? 'Informe o número' : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<Turno>(
-                value: _turnoSelecionado,
-                decoration: const InputDecoration(labelText: 'Turno da Turma', prefixIcon: Icon(Icons.schedule)),
+                initialValue: _turnoSelecionado,
+                decoration: const InputDecoration(
+                  labelText: 'Turno da Turma',
+                  prefixIcon: Icon(Icons.schedule),
+                ),
                 items: Turno.values.map((Turno turno) {
-                  return DropdownMenuItem(value: turno, child: Text(turno.name.toUpperCase()));
+                  return DropdownMenuItem(
+                    value: turno,
+                    child: Text(turno.name.toUpperCase()),
+                  );
                 }).toList(),
                 onChanged: (val) => setState(() => _turnoSelecionado = val),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<Ano>(
-                value: _anoSelecionado,
-                decoration: const InputDecoration(labelText: 'Ano da Turma', prefixIcon: Icon(Icons.event)),
+                initialValue: _anoSelecionado,
+                decoration: const InputDecoration(
+                  labelText: 'Ano da Turma',
+                  prefixIcon: Icon(Icons.event),
+                ),
                 items: Ano.values.map((Ano ano) {
-                  return DropdownMenuItem(value: ano, child: Text(ano.name.toUpperCase()));
+                  return DropdownMenuItem(
+                    value: ano,
+                    child: Text(ano.name.toUpperCase()),
+                  );
                 }).toList(),
                 onChanged: (val) => setState(() => _anoSelecionado = val),
               ),
@@ -120,10 +147,20 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
                 stream: database.watchEscolas(),
                 builder: (context, snapshot) {
                   final escolas = snapshot.data ?? [];
-                  return DropdownButtonFormField<int> (
-                    value: _escolaIdSelecionada,
-                    decoration: const InputDecoration(labelText: 'Escola vinculada', prefixIcon: Icon(Icons.school)),
-                    items: escolas.map((e) => DropdownMenuItem(value: e.escId, child: Text(e.escNome))).toList(),
+                  return DropdownButtonFormField<int>(
+                    initialValue: _escolaIdSelecionada,
+                    decoration: const InputDecoration(
+                      labelText: 'Escola vinculada',
+                      prefixIcon: Icon(Icons.school),
+                    ),
+                    items: escolas
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e.escId,
+                            child: Text(e.escNome),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (val) {
                       setState(() {
                         _escolaIdSelecionada = val;
@@ -132,29 +169,47 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
                     },
                     validator: (v) => v == null ? 'Selecione uma escola' : null,
                   );
-                }
+                },
               ),
               const SizedBox(height: 12),
               StreamBuilder<List<Usuario>>(
                 stream: _escolaIdSelecionada != null
-                  ? database.watchProfessoresPorEscola(_escolaIdSelecionada!)
-                  : const Stream.empty(),
+                    ? database.watchProfessoresPorEscola(_escolaIdSelecionada!)
+                    : const Stream.empty(),
                 builder: (context, snapshot) {
                   final professores = snapshot.data ?? [];
-                  return DropdownButtonFormField<int> (
-                    value: _professorIdSelecionado,
-                    decoration: const InputDecoration(labelText: 'Professor responsável', prefixIcon: Icon(Icons.person_pin)),
-                    items: professores.map((e) => DropdownMenuItem(value: e.usuId, child: Text(e.usuNome))).toList(),
-                    onChanged: (val) => setState(() => _professorIdSelecionado = val),
-                    validator: (v) => v == null ? 'Selecione um professor' : null,
+                  return DropdownButtonFormField<int>(
+                    initialValue: _professorIdSelecionado,
+                    decoration: const InputDecoration(
+                      labelText: 'Professor responsável',
+                      prefixIcon: Icon(Icons.person_pin),
+                    ),
+                    items: professores
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e.usuId,
+                            child: Text(e.usuNome),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) =>
+                        setState(() => _professorIdSelecionado = val),
+                    validator: (v) =>
+                        v == null ? 'Selecione um professor' : null,
                   );
-                }
+                },
               ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _salvarTurma,
-                style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                child: Text(widget.turmaEdicao != null ? 'Salvar Alterações' : 'Cadastrar Turma'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: Text(
+                  widget.turmaEdicao != null
+                      ? 'Salvar Alterações'
+                      : 'Cadastrar Turma',
+                ),
               ),
             ],
           ),

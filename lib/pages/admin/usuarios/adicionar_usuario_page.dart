@@ -5,8 +5,8 @@ import 'package:cpf_cnpj_validator/cpf_validator.dart';
 
 // Máscara para CPF
 final maskCPF = MaskTextInputFormatter(
-  mask: '###.###.###-##', 
-  filter: {"#": RegExp(r'[0-9]')}
+  mask: '###.###.###-##',
+  filter: {"#": RegExp(r'[0-9]')},
 );
 
 class AdicionarUsuarioPage extends StatefulWidget {
@@ -44,42 +44,48 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
   }
 
   Future<void> _selecionarData(BuildContext context) async {
-    final DateTime? data_selecionada = await showDatePicker(
+    final DateTime? dataSelecionada = await showDatePicker(
       context: context,
       initialDate: _dataNascimento ?? DateTime(1990),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
-    if (data_selecionada != null) setState(() => _dataNascimento = data_selecionada);
+    if (dataSelecionada != null)
+      setState(() => _dataNascimento = dataSelecionada);
   }
 
   // Validar E-mail
   String? _validarEmail(String? value) {
-  if (value == null || value.isEmpty) return 'Informe o e-mail';
-  
-  final bool emailValido = RegExp(
-    r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+"
+    if (value == null || value.isEmpty) return 'Informe o e-mail';
+
+    final bool emailValido = RegExp(
+      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
     ).hasMatch(value);
-    
+
     if (!emailValido) return 'E-mail inválido';
     return null;
   }
 
   Future<void> _salvarUsuario() async {
-    if (_formKey.currentState!.validate() && _dataNascimento != null && _escolaIdSelecionada != null && _cargoIdSelecionado != null) {
-
+    if (_formKey.currentState!.validate() &&
+        _dataNascimento != null &&
+        _escolaIdSelecionada != null &&
+        _cargoIdSelecionado != null) {
       final cpfLimpo = _nomeController.text.replaceAll(RegExp(r'[^0-9]'), '');
-      
+
       try {
         if (widget.usuarioEdicao != null) {
           // UPDATE
-          await supabase.from('usuarios').update({
-            'usu_nome': _nomeController.text,
-            'usu_cpf': cpfLimpo,
-            'usu_dt_nascimento': _dataNascimento!.toIso8601String(),
-            'usu_cargo': _cargoIdSelecionado,
-            'usu_escola': _escolaIdSelecionada,
-          }).eq('usu_id', widget.usuarioEdicao!['usu_id']);
+          await supabase
+              .from('usuarios')
+              .update({
+                'usu_nome': _nomeController.text,
+                'usu_cpf': cpfLimpo,
+                'usu_dt_nascimento': _dataNascimento!.toIso8601String(),
+                'usu_cargo': _cargoIdSelecionado,
+                'usu_escola': _escolaIdSelecionada,
+              })
+              .eq('usu_id', widget.usuarioEdicao!['usu_id']);
         } else {
           // INSERT
           final authResponse = await supabase.auth.signUp(
@@ -105,7 +111,10 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
         if (!mounted) return;
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Operação realizada com sucesso!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Operação realizada com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
         );
       } catch (e) {
         if (!mounted) return;
@@ -119,7 +128,11 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.usuarioEdicao != null ? 'Editar Usuário' : 'Novo Usuário')),
+      appBar: AppBar(
+        title: Text(
+          widget.usuarioEdicao != null ? 'Editar Usuário' : 'Novo Usuário',
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -128,13 +141,20 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
             children: [
               TextFormField(
                 controller: _nomeController,
-                decoration: const InputDecoration(labelText: 'Nome Completo', prefixIcon: Icon(Icons.person)),
+                decoration: const InputDecoration(
+                  labelText: 'Nome Completo',
+                  prefixIcon: Icon(Icons.person),
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _cpfController,
                 inputFormatters: [maskCPF],
-                decoration: const InputDecoration(labelText: 'CPF', prefixIcon: Icon(Icons.badge), hintText: '000.000.000-00'),
+                decoration: const InputDecoration(
+                  labelText: 'CPF',
+                  prefixIcon: Icon(Icons.badge),
+                  hintText: '000.000.000-00',
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Informe o CPF';
@@ -146,15 +166,20 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.calendar_today),
-                title: Text(_dataNascimento == null
-                  ? "Selecionar Data de Nascimento"
-                  : "Nascimento: ${_dataNascimento!.day}/${_dataNascimento!.month}/${_dataNascimento!.year}"),
+                title: Text(
+                  _dataNascimento == null
+                      ? "Selecionar Data de Nascimento"
+                      : "Nascimento: ${_dataNascimento!.day}/${_dataNascimento!.month}/${_dataNascimento!.year}",
+                ),
                 onTap: () => _selecionarData(context),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'E-mail', prefixIcon: Icon(Icons.email)),
+                decoration: const InputDecoration(
+                  labelText: 'E-mail',
+                  prefixIcon: Icon(Icons.email),
+                ),
                 validator: _validarEmail,
                 keyboardType: TextInputType.emailAddress,
                 enabled: widget.usuarioEdicao == null,
@@ -163,9 +188,13 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _senhaController,
-                  decoration: const InputDecoration(labelText: 'Senha', prefixIcon: Icon(Icons.lock)),
+                  decoration: const InputDecoration(
+                    labelText: 'Senha',
+                    prefixIcon: Icon(Icons.lock),
+                  ),
                   obscureText: true,
-                  validator: (v) => v!.length < 8 ? 'Mínimo 8 caracteres' : null,
+                  validator: (v) =>
+                      v!.length < 8 ? 'Mínimo 8 caracteres' : null,
                 ),
               ],
               const SizedBox(height: 12),
@@ -174,38 +203,60 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
                 builder: (context, snapshot) {
                   final cargos = snapshot.data ?? [];
                   return DropdownButtonFormField<int>(
-                    value: _cargoIdSelecionado,
-                    decoration: const InputDecoration(labelText: 'Cargo', prefixIcon: Icon(Icons.assignment_ind)),
-                    items: cargos.map((c) => DropdownMenuItem<int>(
-                      value: c['car_id'],
-                      child: Text(c['car_nome'].toString().toUpperCase())
-                    )).toList(),
-                    onChanged: (val) => setState(() => _cargoIdSelecionado = val),
+                    initialValue: _cargoIdSelecionado,
+                    decoration: const InputDecoration(
+                      labelText: 'Cargo',
+                      prefixIcon: Icon(Icons.assignment_ind),
+                    ),
+                    items: cargos
+                        .map(
+                          (c) => DropdownMenuItem<int>(
+                            value: c['car_id'],
+                            child: Text(c['car_nome'].toString().toUpperCase()),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) =>
+                        setState(() => _cargoIdSelecionado = val),
                     validator: (v) => v == null ? 'Selecione um cargo' : null,
                   );
-                }
+                },
               ),
               FutureBuilder<List<Map<String, dynamic>>>(
                 future: supabase.from('escolas').select(),
                 builder: (context, snapshot) {
                   final escolas = snapshot.data ?? [];
                   return DropdownButtonFormField<int>(
-                    value: _escolaIdSelecionada,
-                    decoration: const InputDecoration(labelText: 'Escola vinculada', prefixIcon: Icon(Icons.school)),
-                    items: escolas.map((e) => DropdownMenuItem<int>(
-                      value: e['esc_id'], 
-                      child: Text(e['esc_nome'])
-                    )).toList(),
-                    onChanged: (val) => setState(() => _escolaIdSelecionada = val),
+                    initialValue: _escolaIdSelecionada,
+                    decoration: const InputDecoration(
+                      labelText: 'Escola vinculada',
+                      prefixIcon: Icon(Icons.school),
+                    ),
+                    items: escolas
+                        .map(
+                          (e) => DropdownMenuItem<int>(
+                            value: e['esc_id'],
+                            child: Text(e['esc_nome']),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) =>
+                        setState(() => _escolaIdSelecionada = val),
                     validator: (v) => v == null ? 'Selecione uma escola' : null,
                   );
-                }
+                },
               ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _salvarUsuario,
-                style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                child: Text(widget.usuarioEdicao != null ? 'Salvar Alterações' : 'Cadastrar Usuário'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: Text(
+                  widget.usuarioEdicao != null
+                      ? 'Salvar Alterações'
+                      : 'Cadastrar Usuário',
+                ),
               ),
             ],
           ),

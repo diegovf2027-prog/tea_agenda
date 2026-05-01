@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:drift/drift.dart' as d;   // Não ter conflito com o Material
+import 'package:drift/drift.dart' as d; // Não ter conflito com o Material
 import 'package:tea_agenda/data/local/database.dart';
 import 'package:provider/provider.dart';
 
@@ -38,17 +38,21 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
   }
 
   Future<void> _selecionarData(BuildContext context) async {
-    final DateTime? data_selecionada = await showDatePicker(
+    final DateTime? dataSelecionada = await showDatePicker(
       context: context,
       initialDate: _dataNascimento ?? DateTime(1990),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
-    if (data_selecionada != null) setState(() => _dataNascimento = data_selecionada);
+    if (dataSelecionada != null)
+      setState(() => _dataNascimento = dataSelecionada);
   }
 
   void _salvarUsuario() async {
-    if (_formKey.currentState!.validate() && _dataNascimento != null && _escolaIdSelecionada != null && _cargoSelecionado != null) {
+    if (_formKey.currentState!.validate() &&
+        _dataNascimento != null &&
+        _escolaIdSelecionada != null &&
+        _cargoSelecionado != null) {
       final database = Provider.of<AppDatabase>(context, listen: false);
 
       final novoUsuario = UsuariosCompanion(
@@ -62,9 +66,11 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
       );
 
       if (widget.usuarioEdicao != null) {
-        await database.update(database.usuarios).replace(
-          novoUsuario.copyWith(usuId: d.Value(widget.usuarioEdicao!.usuId)),
-        );
+        await database
+            .update(database.usuarios)
+            .replace(
+              novoUsuario.copyWith(usuId: d.Value(widget.usuarioEdicao!.usuId)),
+            );
       } else {
         await database.into(database.usuarios).insert(novoUsuario);
       }
@@ -72,11 +78,18 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.usuarioEdicao != null ? 'Usuário atualizado!' : 'Usuário cadastrado!'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(
+            widget.usuarioEdicao != null
+                ? 'Usuário atualizado!'
+                : 'Usuário cadastrado!',
+          ),
+          backgroundColor: Colors.green,
+        ),
       );
     } else {
       String erro = "Preencha todos os campos corretamente!";
-      
+
       if (_dataNascimento == null) {
         erro = "Selecione a data de nascimento!";
       } else if (_cargoSelecionado == null) {
@@ -87,8 +100,8 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(erro), 
-          backgroundColor: Colors.red // Vermelho para indicar erro
+          content: Text(erro),
+          backgroundColor: Colors.red, // Vermelho para indicar erro
         ),
       );
     }
@@ -99,7 +112,11 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
     final database = Provider.of<AppDatabase>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.usuarioEdicao != null ? 'Editar Usuário' : 'Novo Usuário')),
+      appBar: AppBar(
+        title: Text(
+          widget.usuarioEdicao != null ? 'Editar Usuário' : 'Novo Usuário',
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -108,42 +125,62 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
             children: [
               TextFormField(
                 controller: _nomeController,
-                decoration: const InputDecoration(labelText: 'Nome Completo', prefixIcon: Icon(Icons.person)),
+                decoration: const InputDecoration(
+                  labelText: 'Nome Completo',
+                  prefixIcon: Icon(Icons.person),
+                ),
                 validator: (v) => v!.isEmpty ? 'Informe o nome' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _cpfController,
-                decoration: const InputDecoration(labelText: 'CPF', prefixIcon: Icon(Icons.badge)),
+                decoration: const InputDecoration(
+                  labelText: 'CPF',
+                  prefixIcon: Icon(Icons.badge),
+                ),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 12),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.calendar_today),
-                title: Text(_dataNascimento == null
-                  ? "Selecionar Data de Nascimento"
-                  : "Nascimento: ${_dataNascimento!.day}/${_dataNascimento!.month}/${_dataNascimento!.year}"),
+                title: Text(
+                  _dataNascimento == null
+                      ? "Selecionar Data de Nascimento"
+                      : "Nascimento: ${_dataNascimento!.day}/${_dataNascimento!.month}/${_dataNascimento!.year}",
+                ),
                 onTap: () => _selecionarData(context),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'E-mail', prefixIcon: Icon(Icons.email)),
+                decoration: const InputDecoration(
+                  labelText: 'E-mail',
+                  prefixIcon: Icon(Icons.email),
+                ),
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _senhaController,
-                decoration: const InputDecoration(labelText: 'Senha', prefixIcon: Icon(Icons.lock)),
+                decoration: const InputDecoration(
+                  labelText: 'Senha',
+                  prefixIcon: Icon(Icons.lock),
+                ),
                 obscureText: true,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<Cargos>(
-                value: _cargoSelecionado,
-                decoration: const InputDecoration(labelText: 'Cargo', prefixIcon: Icon(Icons.assignment_ind)),
+                initialValue: _cargoSelecionado,
+                decoration: const InputDecoration(
+                  labelText: 'Cargo',
+                  prefixIcon: Icon(Icons.assignment_ind),
+                ),
                 items: Cargos.values.map((Cargos cargo) {
-                  return DropdownMenuItem(value: cargo, child: Text(cargo.name.toUpperCase()));
+                  return DropdownMenuItem(
+                    value: cargo,
+                    child: Text(cargo.name.toUpperCase()),
+                  );
                 }).toList(),
                 onChanged: (val) => setState(() => _cargoSelecionado = val),
               ),
@@ -152,20 +189,37 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
                 stream: database.watchEscolas(),
                 builder: (context, snapshot) {
                   final escolas = snapshot.data ?? [];
-                  return DropdownButtonFormField<int> (
-                    value: _escolaIdSelecionada,
-                    decoration: const InputDecoration(labelText: 'Escola vinculada', prefixIcon: Icon(Icons.school)),
-                    items: escolas.map((e) => DropdownMenuItem(value: e.escId, child: Text(e.escNome))).toList(),
-                    onChanged: (val) => setState(() => _escolaIdSelecionada = val),
+                  return DropdownButtonFormField<int>(
+                    initialValue: _escolaIdSelecionada,
+                    decoration: const InputDecoration(
+                      labelText: 'Escola vinculada',
+                      prefixIcon: Icon(Icons.school),
+                    ),
+                    items: escolas
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e.escId,
+                            child: Text(e.escNome),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) =>
+                        setState(() => _escolaIdSelecionada = val),
                     validator: (v) => v == null ? 'Selecione uma escola' : null,
                   );
-                }
+                },
               ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _salvarUsuario,
-                style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                child: Text(widget.usuarioEdicao != null ? 'Salvar Alterações' : 'Cadastrar Usuário'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: Text(
+                  widget.usuarioEdicao != null
+                      ? 'Salvar Alterações'
+                      : 'Cadastrar Usuário',
+                ),
               ),
             ],
           ),
