@@ -15,74 +15,117 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: selectedIndex == -1 ? 0 : selectedIndex,
-      type: BottomNavigationBarType.fixed,
-      onTap: onTap,
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(
-            Icons.feed,
-            color: selectedIndex == 0 ? Colors.blue : inActiveIconColor,
-          ),
-          activeIcon: const Icon(Icons.feed, color: Colors.blue),
-          label: "Feed",
+    final int currentIndex = selectedIndex < 0 ? 0 : selectedIndex;
+    final bool hasSelection = selectedIndex >= 0;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.asset(
-            "assets/svgs/documento.svg",
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(
-              inActiveIconColor,
-              BlendMode.srcIn,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: currentIndex,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          selectedItemColor: hasSelection
+              ? const Color(0xFF2196F3)
+              : inActiveIconColor,
+          unselectedItemColor: inActiveIconColor,
+          iconSize: 28,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          onTap: onTap,
+          items: [
+            BottomNavigationBarItem(
+              icon: SvgPicture.asset(
+                "assets/svgs/documento.svg",
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  selectedIndex == 0
+                      ? const Color(0xFF2196F3)
+                      : inActiveIconColor,
+                  BlendMode.srcIn,
+                ),
+              ),
+              activeIcon: SvgPicture.asset(
+                "assets/svgs/documento.svg",
+                width: 28,
+                height: 28,
+                colorFilter: const ColorFilter.mode(
+                  Color(0xFF2196F3),
+                  BlendMode.srcIn,
+                ),
+              ),
+              label: "Relatórios",
             ),
-          ),
-          activeIcon: SvgPicture.asset(
-            "assets/svgs/documento.svg",
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
-          ),
-          label: "Relatórios",
-        ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.asset(
-            "assets/svgs/calendario.svg",
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(
-              inActiveIconColor,
-              BlendMode.srcIn,
+            BottomNavigationBarItem(
+              icon: SvgPicture.asset(
+                "assets/svgs/calendario.svg",
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  selectedIndex == 1
+                      ? const Color(0xFF2196F3)
+                      : inActiveIconColor,
+                  BlendMode.srcIn,
+                ),
+              ),
+              activeIcon: SvgPicture.asset(
+                "assets/svgs/calendario.svg",
+                width: 28,
+                height: 28,
+                colorFilter: const ColorFilter.mode(
+                  Color(0xFF2196F3),
+                  BlendMode.srcIn,
+                ),
+              ),
+              label: "Calendário",
             ),
-          ),
-          activeIcon: SvgPicture.asset(
-            "assets/svgs/calendario.svg",
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
-          ),
-          label: "Calendário",
-        ),
-        BottomNavigationBarItem(
-          icon: SvgPicture.asset(
-            "assets/svgs/botao-adicionar.svg",
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(
-              inActiveIconColor,
-              BlendMode.srcIn,
+            BottomNavigationBarItem(
+              icon: SvgPicture.asset(
+                "assets/svgs/botao-adicionar.svg",
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  selectedIndex == 2
+                      ? const Color(0xFF2196F3)
+                      : inActiveIconColor,
+                  BlendMode.srcIn,
+                ),
+              ),
+              activeIcon: SvgPicture.asset(
+                "assets/svgs/botao-adicionar.svg",
+                width: 28,
+                height: 28,
+                colorFilter: const ColorFilter.mode(
+                  Color(0xFF2196F3),
+                  BlendMode.srcIn,
+                ),
+              ),
+              label: "Adicionar",
             ),
-          ),
-          activeIcon: SvgPicture.asset(
-            "assets/svgs/botao-adicionar.svg",
-            width: 24,
-            height: 24,
-            colorFilter: const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
-          ),
-          label: "Adicionar",
+          ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -54,6 +54,30 @@ class _ReportsPageState extends State<ReportsPage> {
                 ),
               ],
             ),
+
+            const SizedBox(height: 20),
+            const Text(
+              "Intervalo de Tempo",
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _selectStartDate(context),
+                    child: Text("De: ${_formatDate(_startDate)}"),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _selectEndDate(context),
+                    child: Text("Até: ${_formatDate(_endDate)}"),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
             const Text(
               "Classificação do Dia",
@@ -62,6 +86,17 @@ class _ReportsPageState extends State<ReportsPage> {
             const SizedBox(height: 10),
             Row(
               children: [
+                Expanded(
+                  child: RadioListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text("Todos os dias"),
+                    value: 'todos',
+                    groupValue: _dayClassification,
+                    onChanged: (value) {
+                      setState(() => _dayClassification = value!);
+                    },
+                  ),
+                ),
                 Expanded(
                   child: RadioListTile(
                     contentPadding: EdgeInsets.zero,
@@ -88,29 +123,6 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Intervalo de Tempo",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _selectStartDate(context),
-                    child: Text("De: ${_formatDate(_startDate)}"),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _selectEndDate(context),
-                    child: Text("Até: ${_formatDate(_endDate)}"),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Text(
               "Formato de Compartilhamento",
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
@@ -118,11 +130,7 @@ class _ReportsPageState extends State<ReportsPage> {
             DropdownButton<String>(
               isExpanded: true,
               value: _shareFormat,
-              items: const [
-                DropdownMenuItem(value: 'pdf', child: Text('PDF')),
-                DropdownMenuItem(value: 'email', child: Text('Email')),
-                DropdownMenuItem(value: 'impressao', child: Text('Impressão')),
-              ],
+              items: const [DropdownMenuItem(value: 'pdf', child: Text('PDF'))],
               onChanged: (value) {
                 setState(() => _shareFormat = value!);
               },

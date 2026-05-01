@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tea_agenda/data/repositories/usuarios_repository.dart';
 import 'package:tea_agenda/pages/admin/escolha_admin_page.dart';
-import 'package:tea_agenda/pages/student_selection.dart';
+import 'package:tea_agenda/pages/school_selection.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,6 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordField = TextEditingController();
   final _usuariosRepo = UsuariosRepository();
   bool _loading = false;
+  bool _obscurePassword = true;
 
   Future<void> login() async {
     setState(() => _loading = true);
@@ -36,30 +37,31 @@ class _LoginPageState extends State<LoginPage> {
         if (perfil != null) {
           String cargo = perfil['cargo_nome']?.toString().toUpperCase() ?? '';
 
-          if (cargo == 'ADMINISTRADOR' || cargo == 'DIRETOR' || cargo == 'ORIENTADOR') {
+          if (cargo == 'ADMINISTRADOR' ||
+              cargo == 'DIRETOR' ||
+              cargo == 'ORIENTADOR') {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => const AdminEscolha()
-              ),
+              MaterialPageRoute(builder: (context) => const AdminEscolha()),
             );
           } else {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => const StudentSelection()
-              ),
+              MaterialPageRoute(builder: (context) => const SchoolSelection()),
             );
           }
         }
       }
     } on AuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content:  Text(e.message), backgroundColor: Colors.red),
+        SnackBar(content: Text(e.message), backgroundColor: Colors.red),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content:  Text('Erro ao conectar ao servidor.'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Erro ao conectar ao servidor.'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -79,12 +81,12 @@ class _LoginPageState extends State<LoginPage> {
     } else if (email == 'professor' && senha == 'professor') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const StudentSelection()),
+        MaterialPageRoute(builder: (context) => const SchoolSelection()),
       );
     } else if (email == '1' && senha == '1') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const StudentSelection()),
+        MaterialPageRoute(builder: (context) => const SchoolSelection()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -127,27 +129,39 @@ class _LoginPageState extends State<LoginPage> {
                   width: 350,
                   child: TextField(
                     controller: passwordField,
-                    obscureText: true,
-                    decoration: const InputDecoration(
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
                       labelText: 'Senha',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
                   ),
                 ),
 
                 const SizedBox(height: 30),
                 _loading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(200, 50),
-                    ),
-                    onPressed: login,
-                    child: const Text('Entrar'),
-                  ),
+                    ? const CircularProgressIndicator()
+                    : ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(200, 50),
+                        ),
+                        onPressed: login,
+                        child: const Text('Entrar'),
+                      ),
               ],
             ),
-          )
+          ),
         ),
       ),
     );

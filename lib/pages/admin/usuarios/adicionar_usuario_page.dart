@@ -50,8 +50,9 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
-    if (dataSelecionada != null)
+    if (dataSelecionada != null) {
       setState(() => _dataNascimento = dataSelecionada);
+    }
   }
 
   // Validar E-mail

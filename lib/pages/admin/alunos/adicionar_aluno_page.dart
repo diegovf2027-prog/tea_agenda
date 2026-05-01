@@ -42,8 +42,9 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
       firstDate: DateTime(2010),
       lastDate: DateTime.now(),
     );
-    if (dataSelecionada != null)
+    if (dataSelecionada != null) {
       setState(() => _dataNascimento = dataSelecionada);
+    }
   }
 
   void _salvarAluno() async {

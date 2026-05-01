@@ -14,16 +14,16 @@ class StudentPage extends StatefulWidget {
 }
 
 class _StudentPageState extends State<StudentPage> {
-  int _selectedIndex = -1; // -1 significa nenhum selecionado
+  int _selectedIndex = -1; // -1 mostra o feed inicial
 
-  // Suas quatro seções
+  // Seções sem o Feed na navegação inferior
   late List<Widget> pages;
+  final List<String> pageTitles = ['Relatórios', 'Calendário', 'Adicionar'];
 
   @override
   void initState() {
     super.initState();
     pages = [
-      _buildFeedSection(),
       _buildRelatorioSection(),
       _buildCalendarioSection(),
       _buildAdicaoSection(),
@@ -36,33 +36,35 @@ class _StudentPageState extends State<StudentPage> {
     });
   }
 
+  void _goBack() {
+    if (_selectedIndex == -1) {
+      Navigator.of(context).pop();
+    } else {
+      setState(() {
+        _selectedIndex = -1;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isFeed = _selectedIndex == -1;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.name), centerTitle: true),
-      body: _selectedIndex == -1 ? _buildEmptySection() : pages[_selectedIndex],
+      appBar: AppBar(
+        title: Text(isFeed ? widget.name : pageTitles[_selectedIndex]),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _goBack,
+        ),
+      ),
+      body: isFeed ? _buildFeedSection() : pages[_selectedIndex],
       bottomNavigationBar: SizedBox(
         height: 120,
         child: BottomNavBar(
           selectedIndex: _selectedIndex,
           onTap: _onNavItemTapped,
         ),
-      ),
-    );
-  }
-
-  Widget _buildEmptySection() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.home, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            "Selecione uma opção",
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
       ),
     );
   }

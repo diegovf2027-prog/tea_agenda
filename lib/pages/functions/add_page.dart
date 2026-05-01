@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as path;
 
 class AddPage extends StatefulWidget {
   const AddPage({super.key});
@@ -9,6 +13,7 @@ class AddPage extends StatefulWidget {
 
 class _AddPageState extends State<AddPage> {
   final TextEditingController _observationController = TextEditingController();
+  File? _selectedImage;
 
   String? _alimentacao;
   String? _atividades;
@@ -41,6 +46,30 @@ class _AddPageState extends State<AddPage> {
   }
 
   // Função de Salvar o Registro
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
+      final String extension = path.extension(pickedFile.path).toLowerCase();
+      if (extension == '.jpg' || extension == '.jpeg') {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Selecione uma imagem no formato JPG ou JPEG.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _salvarRegistro() {
     if (_alimentacao == null || _atividades == null || _comportamento == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,6 +110,7 @@ class _AddPageState extends State<AddPage> {
       _comportamento = null;
       _humor = 3;
       _atividade = 3;
+      _selectedImage = null;
       _observationController.clear();
     });
   }
@@ -89,21 +119,24 @@ class _AddPageState extends State<AddPage> {
     if (humor == 1) return const Color.fromARGB(255, 212, 0, 0);
     if (humor == 2) return const Color.fromARGB(255, 216, 122, 0);
     if (humor == 3) return const Color.fromARGB(255, 255, 217, 0);
-    if (humor == 4) return const Color.fromARGB(255, 165, 202, 0);
-    return const Color.fromARGB(255, 50, 175, 0);
+    if (humor == 4) return const Color.fromARGB(255, 50, 175, 0);
+    return const Color.fromARGB(255, 123, 2, 223);
   }
 
   @override
   Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final formattedDate = '${today.day}/${today.month}/${today.year}';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Seção de Avaliação
-          const Text(
-            'Avaliação do Dia',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            'Avaliação do Dia - $formattedDate',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
 
@@ -211,7 +244,40 @@ class _AddPageState extends State<AddPage> {
               contentPadding: const EdgeInsets.all(12),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          const Text(
+            'Importar Foto',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _pickImage,
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('Selecionar imagem'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_selectedImage != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: AspectRatio(
+                aspectRatio: 3 / 4,
+                child: Image.file(
+                  _selectedImage!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ] else ...[
+            const SizedBox(height: 24),
+          ],
 
           // Seção de Classificação
           const Text(

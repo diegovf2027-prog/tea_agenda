@@ -25,7 +25,7 @@ class _AdminPageState extends State<AdminPage> {
               'Painel Administrativo',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             _buildAdminCard(
               title: 'Gerenciar Escolas',
               iconData: Icons.school,
@@ -33,40 +33,12 @@ class _AdminPageState extends State<AdminPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const GerenciarEscolasPage()
-                    ),
+                    builder: (context) => const GerenciarEscolasPage(),
+                  ),
                 );
               },
             ),
-            const SizedBox(height: 24),
-            // TODO: Adicionar funcionalidades administrativas aqui
-            _buildAdminCard(
-              title: 'Gerenciar Turmas',
-              iconData: Icons.people,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const GerenciarTurmasPage()
-                    ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            // TODO: Adicionar funcionalidades administrativas aqui
-            _buildAdminCard(
-              title: 'Gerenciar Alunos',
-              iconData: Icons.people,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const GerenciarAlunosPage()
-                    ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             // TODO: Adicionar funcionalidades administrativas aqui
             _buildAdminCard(
               title: 'Gerenciar Usuários',
@@ -75,8 +47,34 @@ class _AdminPageState extends State<AdminPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const GerenciarUsuariosPage()
-                    ),
+                    builder: (context) => const GerenciarUsuariosPage(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildAdminCard(
+              title: 'Gerenciar Turmas',
+              iconData: Icons.people,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const GerenciarTurmasPage(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildAdminCard(
+              title: 'Gerenciar Alunos',
+              iconData: Icons.people,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const GerenciarAlunosPage(),
+                  ),
                 );
               },
             ),

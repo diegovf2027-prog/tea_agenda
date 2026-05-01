@@ -12,7 +12,6 @@ class AdminEscolha extends StatefulWidget {
 }
 
 class _AdminEscolhaPageState extends State<AdminEscolha> {
-
   // Função para deslogar
   Future<void> _deslogar() async {
     final supabase = Supabase.instance.client;
@@ -31,26 +30,24 @@ class _AdminEscolhaPageState extends State<AdminEscolha> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home'), centerTitle: true),
+      appBar: AppBar(title: const Text('Home Settings'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             _buildAdminCard(
               title: 'Painel Administrativo',
               iconData: Icons.admin_panel_settings,
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const AdminPage()
-                  ),
+                  MaterialPageRoute(builder: (context) => const AdminPage()),
                 );
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
             _buildAdminCard(
               title: 'Registros',
               iconData: Icons.view_agenda,
@@ -58,11 +55,12 @@ class _AdminEscolhaPageState extends State<AdminEscolha> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const StudentSelection()
+                    builder: (context) => const StudentSelection(),
                   ),
                 );
               },
             ),
+            const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _deslogar,
               icon: const Icon(Icons.logout),
