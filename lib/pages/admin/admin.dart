@@ -39,10 +39,7 @@ class _AdminPageState extends State<AdminPage> {
               },
             ),
             const SizedBox(height: 16),
-<<<<<<< HEAD
             // TODO: Adicionar funcionalidades administrativas aqui
-=======
->>>>>>> 8caae1795554378ecf44a58a1b393dbfa2744cb7
             _buildAdminCard(
               title: 'Gerenciar Usuários',
               iconData: Icons.people,
