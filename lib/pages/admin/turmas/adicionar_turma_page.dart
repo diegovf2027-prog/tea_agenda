@@ -25,8 +25,6 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
   List<Map<String, dynamic>> _escolas = [];
   List<Map<String, dynamic>> _professores = [];
 
-  bool _carregando = true;
-
   @override
   void initState() {
     super.initState();
@@ -45,7 +43,6 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
         _turnos = List<Map<String, dynamic>>.from(resultados[0]);
         _anos = List<Map<String, dynamic>>.from(resultados[1]);
         _escolas = List<Map<String, dynamic>>.from(resultados[2]);
-        _carregando = false;
       });
 
       if (widget.turmaEdicao != null) {
