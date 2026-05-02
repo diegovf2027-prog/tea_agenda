@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:tea_agenda/data/local/database.dart';
 
 class DetalhesAlunoPage extends StatelessWidget {
-  final Aluno aluno;
+  final Map<String, dynamic> aluno;
 
   const DetalhesAlunoPage({super.key, required this.aluno});
 
   @override
   Widget build(BuildContext context) {
 
-    final database = Provider.of<AppDatabase>(context, listen: false);
+    String dataFormatada = 'Não informada';
+    if (aluno['alu_dt_nascimento'] != null) {
+      DateTime dt = DateTime.parse(aluno['alu_dt_nascimento']);
+      dataFormatada = "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}";
+    }
+
+    // Formatação de CPF
+    String formatarCPF(String cpf) {
+      String numeros = cpf.replaceAll(RegExp(r'[^0-9]'), '');
+      if (numeros.length != 11) return numeros;
+      return "${numeros.substring(0, 3)}.${numeros.substring(3, 6)}.${numeros.substring(6, 9)}-${numeros.substring(9)}";
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -28,54 +37,33 @@ class DetalhesAlunoPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              aluno.aluNome,
+              aluno['alu_nome'] ?? 'Sem nome',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const Divider(height: 32),
-            _buildDetailItem(Icons.badge, "CPF", aluno.aluCFP),
-            _buildDetailItem(Icons.cake, "Data de Nascimento", "${aluno.aluDtNascimento.day}/${aluno.aluDtNascimento.month}/${aluno.aluDtNascimento.year}"),
-            FutureBuilder<Escola>(
-              future: database.getEscolaById(aluno.aluEscolaId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return _buildDetailItem(Icons.school, "Escola", "Carregando...");
-                } else if (snapshot.hasError) {
-                  return _buildDetailItem(Icons.school, "Escola", "Erro ao buscar escola");
-                } else if (snapshot.hasData) {
-                  return _buildDetailItem(Icons.school, "Escola", snapshot.data!.escNome);
-                } else {
-                  return _buildDetailItem(Icons.school, "Escola", "Não encontrada");
-                }
-              },
+            _buildDetailItem(Icons.badge, "CPF", formatarCPF(aluno['alu_cpf'] ?? 'Não informado')),
+            _buildDetailItem(
+              Icons.cake, 
+              "Data de Nascimento", 
+              dataFormatada
             ),
-            FutureBuilder<Turma>(
-              future: database.getTurmaById(aluno.aluTurmaId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return _buildDetailItem(Icons.groups_3, "Turma", "Carregando...");
-                } else if (snapshot.hasError) {
-                  return _buildDetailItem(Icons.groups_3, "Turma", "Erro ao buscar escola");
-                } else if (snapshot.hasData) {
-                  return _buildDetailItem(Icons.groups_3, "Turma", snapshot.data!.turNumero.toString());
-                } else {
-                  return _buildDetailItem(Icons.groups_3, "Turma", "Não encontrada");
-                }
-              },
+            _buildDetailItem(
+              Icons.school, 
+              "Escola", 
+              aluno['escola_nome'] ?? 'Não vinculada'
             ),
-            FutureBuilder<Usuario>(
-              future: database.getUsuarioById(aluno.aluCuidadorId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return _buildDetailItem(Icons.person, "Cuidador", "Carregando...");
-                } else if (snapshot.hasError) {
-                  return _buildDetailItem(Icons.person, "Cuidador", "Erro ao buscar cuidador");
-                } else if (snapshot.hasData) {
-                  return _buildDetailItem(Icons.person, "Cuidador", snapshot.data!.usuNome);
-                } else {
-                  return _buildDetailItem(Icons.person, "Cuidador", "Não encontrado");
-                }
-              },
+            _buildDetailItem(
+              Icons.groups_3, 
+              "Turma", 
+              aluno['turma_numero'] != null 
+                  ? "Turma ${aluno['turma_numero']}" 
+                  : 'Sem turma'
+            ),
+            _buildDetailItem(
+              Icons.person, 
+              "Responsável (Cuidador)", 
+              aluno['cuidador_nome'] ?? 'Não atribuído'
             ),
           ],
         ),
@@ -87,7 +75,10 @@ class DetalhesAlunoPage extends StatelessWidget {
     return ListTile(
       leading: Icon(icon, color: Colors.blue),
       title: Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-      subtitle: Text(value, style: const TextStyle(fontSize: 16, color: Colors.black87)),
+      subtitle: Text(
+        value, 
+        style: const TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w500)
+      ),
     );
   }
 }

@@ -81,12 +81,12 @@ class _LoginPageState extends State<LoginPage> {
     } else if (email == 'professor' && senha == 'professor') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const SchoolSelection()),
+        MaterialPageRoute(builder: (context) => const StudentSelection()),
       );
     } else if (email == '1' && senha == '1') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const SchoolSelection()),
+        MaterialPageRoute(builder: (context) => const StudentSelection()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -132,19 +132,7 @@ class _LoginPageState extends State<LoginPage> {
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       labelText: 'Senha',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
+                      border: OutlineInputBorder(),
                     ),
                   ),
                 ),

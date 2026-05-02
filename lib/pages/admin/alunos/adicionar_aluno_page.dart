@@ -4,7 +4,7 @@ import 'package:tea_agenda/data/local/database.dart';
 import 'package:provider/provider.dart';
 
 class AdicionarAlunoPage extends StatefulWidget {
-  final Aluno? alunoEdicao;
+  final Map<String, dynamic>? alunoEdicao;
   const AdicionarAlunoPage({super.key, this.alunoEdicao});
 
   @override
@@ -13,26 +13,79 @@ class AdicionarAlunoPage extends StatefulWidget {
 
 class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
   final _formKey = GlobalKey<FormState>();
+  final supabase = Supabase.instance.client;
 
   final _nomeController = TextEditingController();
   final _cpfController = TextEditingController();
 
   DateTime? _dataNascimento;
-  int? _turmaAluno;
-  int? _cuidadorIdSelecionada;
+  int? _turmaIdSelecionada;
   int? _escolaIdSelecionada;
+  String? _cuidadorIdSelecionado;
+
+  List<Map<String, dynamic>> _escolas = [];
+  List<Map<String, dynamic>> _turmas = [];
+  List<Map<String, dynamic>> _cuidadores = [];
+  bool _carregando = true;
 
   @override
   void initState() {
     super.initState();
-    if (widget.alunoEdicao != null) {
-      _nomeController.text = widget.alunoEdicao!.aluNome;
-      _cpfController.text = widget.alunoEdicao!.aluCFP;
-      _dataNascimento = widget.alunoEdicao!.aluDtNascimento;
-      _escolaIdSelecionada = widget.alunoEdicao!.aluEscolaId;
-      _turmaAluno = widget.alunoEdicao!.aluTurmaId;
-      _cuidadorIdSelecionada = widget.alunoEdicao!.aluCuidadorId;
+    _inicializarDados();
+  }
+
+  Future<void> _inicializarDados() async {
+    try {
+      final escolasData = await supabase
+          .from('escolas')
+          .select()
+          .order('esc_nome');
+
+      setState(() {
+        _escolas = List<Map<String, dynamic>>.from(escolasData);
+        _carregando = false;
+      });
+
+      if (widget.alunoEdicao != null) {
+        final a = widget.alunoEdicao!;
+        _nomeController.text = a['alu_nome'] ?? '';
+        _cpfController.text = a['alu_cpf'] ?? '';
+        _dataNascimento = a['alu_dt_nascimento'] != null
+            ? DateTime.parse(a['alu_dt_nascimento'])
+            : null;
+        _escolaIdSelecionada = a['alu_escola'];
+
+        if (_escolaIdSelecionada != null) {
+          await _carregarListasDependente(_escolaIdSelecionada!);
+          setState(() {
+            _turmaIdSelecionada = a['alu_turma'];
+            _cuidadorIdSelecionado = a['alu_cuidador'];
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Erro ao inicializar: $e");
     }
+  }
+
+  Future<void> _carregarListasDependente(int escolaId) async {
+    final resultados = await Future.wait([
+      supabase
+          .from('turmas')
+          .select()
+          .eq('tur_escola', escolaId)
+          .order('tur_numero'),
+      supabase
+          .from('usuarios_com_cargos')
+          .select()
+          .eq('usu_escola', escolaId)
+          .ilike('cargo_nome', 'CUIDADOR%'),
+    ]);
+
+    setState(() {
+      _turmas = List<Map<String, dynamic>>.from(resultados[0]);
+      _cuidadores = List<Map<String, dynamic>>.from(resultados[1]);
+    });
   }
 
   Future<void> _selecionarData(BuildContext context) async {
@@ -54,14 +107,14 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
         _cuidadorIdSelecionada != null) {
       final database = Provider.of<AppDatabase>(context, listen: false);
 
-      final novoAluno = AlunosCompanion(
-        aluNome: d.Value(_nomeController.text),
-        aluCFP: d.Value(_cpfController.text),
-        aluDtNascimento: d.Value(_dataNascimento!),
-        aluEscolaId: d.Value(_escolaIdSelecionada!),
-        aluTurmaId: d.Value(_turmaAluno!),
-        aluCuidadorId: d.Value(_cuidadorIdSelecionada!),
-      );
+      final dados = {
+        'alu_nome': _nomeController.text.trim(),
+        'alu_cpf': cpfLimpo,
+        'alu_dt_nascimento': _dataNascimento!.toIso8601String().split('T')[0],
+        'alu_escola': _escolaIdSelecionada,
+        'alu_turma': _turmaIdSelecionada,
+        'alu_cuidador': _cuidadorIdSelecionado,
+      };
 
       if (widget.alunoEdicao != null) {
         await database
@@ -104,7 +157,8 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
 
   @override
   Widget build(BuildContext context) {
-    final database = Provider.of<AppDatabase>(context);
+    if (_carregando)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
       appBar: AppBar(
@@ -124,6 +178,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                 ),
                 validator: (v) => v!.isEmpty ? 'informe o nome do aluno' : null,
               ),
+
               const SizedBox(height: 12),
               TextFormField(
                 controller: _cpfController,
@@ -132,7 +187,13 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                   prefixIcon: Icon(Icons.badge),
                 ),
                 keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Informe o CPF';
+                  if (!CPFValidator.isValid(value)) return 'CPF inválido';
+                  return null;
+                },
               ),
+
               const SizedBox(height: 12),
               ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -144,13 +205,14 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                 ),
                 onTap: () => _selecionarData(context),
               ),
+
               const SizedBox(height: 12),
               StreamBuilder<List<Escola>>(
                 stream: database.watchEscolas(),
                 builder: (context, snapshot) {
                   final escolas = snapshot.data ?? [];
                   return DropdownButtonFormField<int>(
-                    initialValue: _escolaIdSelecionada,
+                    value: _escolaIdSelecionada,
                     decoration: const InputDecoration(
                       labelText: 'Escola vinculada',
                       prefixIcon: Icon(Icons.school),
@@ -181,7 +243,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                 builder: (context, snapshot) {
                   final turmas = snapshot.data ?? [];
                   return DropdownButtonFormField<int>(
-                    initialValue: _turmaAluno,
+                    value: _turmaAluno,
                     decoration: const InputDecoration(
                       labelText: 'Turma',
                       prefixIcon: Icon(Icons.groups_3),
@@ -201,6 +263,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                   );
                 },
               ),
+
               const SizedBox(height: 12),
               StreamBuilder<List<Usuario>>(
                 stream: _escolaIdSelecionada != null
@@ -209,7 +272,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                 builder: (context, snapshot) {
                   final cuidadores = snapshot.data ?? [];
                   return DropdownButtonFormField<int>(
-                    initialValue: _cuidadorIdSelecionada,
+                    value: _cuidadorIdSelecionada,
                     decoration: const InputDecoration(
                       labelText: 'Cuidador responsável',
                       prefixIcon: Icon(Icons.person_pin),
@@ -229,6 +292,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
                   );
                 },
               ),
+
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _salvarAluno,

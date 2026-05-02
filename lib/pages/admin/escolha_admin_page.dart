@@ -66,7 +66,7 @@ class _AdminEscolhaPageState extends State<AdminEscolha> {
               icon: const Icon(Icons.logout),
               label: const Text('Sair do Sistema'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red[50], // Um tom leve de vermelho
+                backgroundColor: Colors.red[50],
                 foregroundColor: Colors.red,
               ),
             ),

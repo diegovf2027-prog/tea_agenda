@@ -34,6 +34,8 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # Drift e SQLite
   drift: ^2.32.1

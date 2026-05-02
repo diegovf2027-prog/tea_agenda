@@ -37,9 +37,15 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
       _nomeController.text = widget.usuarioEdicao!['usu_nome'];
       _cpfController.text = widget.usuarioEdicao!['usu_cpf'];
       _emailController.text = widget.usuarioEdicao!['usu_email'];
-      _dataNascimento = widget.usuarioEdicao!['usu_dt_nascimento'];
-      _cargoIdSelecionado = widget.usuarioEdicao!['usu_cargo'];
+      if (widget.usuarioEdicao!['usu_dt_nascimento'] != null) {
+        setState(() {
+          _dataNascimento = DateTime.parse(widget.usuarioEdicao!['usu_dt_nascimento']);
+        });
+      }
+      setState(() {
+      _cargoIdSelecionado = widget.usuarioEdicao!['usu_cargo']; 
       _escolaIdSelecionada = widget.usuarioEdicao!['usu_escola'];
+    });
     }
   }
 
@@ -247,6 +253,7 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
                   );
                 },
               ),
+
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _salvarUsuario,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:tea_agenda/data/local/database.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tea_agenda/pages/admin/turmas/adicionar_turma_page.dart';
 import 'package:tea_agenda/pages/admin/turmas/detalhes_turma_page.dart';
 
@@ -14,12 +13,11 @@ class GerenciarTurmasPage extends StatefulWidget {
 class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
   final TextEditingController _searchController = TextEditingController();
   String _filtro = '';
+  
+  final supabase = Supabase.instance.client;
 
   @override
   Widget build(BuildContext context) {
-
-    final database = Provider.of<AppDatabase>(context);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Gerenciar Turmas"),
@@ -49,8 +47,8 @@ class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
           ),
           // Lista de Turmas
           Expanded(
-            child: StreamBuilder<List<Turma>>(
-              stream: database.watchTurmas(),
+            child: StreamBuilder<List<Map<String, dynamic>>>(
+              stream: supabase.from('turmas_com_detalhes').stream(primaryKey: ['tur_id']).order('tur_numero'),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -60,25 +58,21 @@ class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
                   return Center(child: Text("Erro: ${snapshot.error}"));
                 }
 
-                final listaTurmas = snapshot.data ?? [];
+                final turmas = snapshot.data ?? [];
 
-                final turmasFiltradas = listaTurmas.where((turma) {
-                  return turma.turNumero
-                    .toString()
-                    .toLowerCase()
-                    .contains(_filtro.toLowerCase());
+                final filtradas = turmas.where((t) {
+                  return t['tur_numero'].toString().contains(_filtro);
                 }).toList();
 
-                if (turmasFiltradas.isEmpty) {
-                  return const Center(
-                    child: Text("Nenhuma turma encontrada."),
-                  );
+                if (filtradas.isEmpty) {
+                  return const Center(child: Text("Nenhuma turma encontrada."));
                 }
 
                 return ListView.builder(
-                  itemCount: turmasFiltradas.length,
+                  itemCount: filtradas.length,
                   itemBuilder: (context, index) {
-                    final turma = turmasFiltradas[index];
+                    final turma = filtradas[index];
+                    String subtitulo = "${turma['ano_descricao']}º Ano - ${turma['escola_nome']}";
                     return Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -86,17 +80,8 @@ class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
                       ),
                       child: ListTile(
                         leading: const Icon(Icons.door_front_door, color: Colors.blue),
-                        title: Text(turma.turNumero.toString()),
-                        subtitle: FutureBuilder<Escola>(
-                          future: database.getEscolaById(turma.turEscola),
-                          builder: (context, snapshot) {
-                            String anoFormatado = "${turma.turAno.index + 1}º Ano";
-                            if (snapshot.hasData) {
-                              return Text("$anoFormatado - ${snapshot.data!.escNome}");
-                            }
-                            return Text("$anoFormatado - Carregando escola...");
-                          }
-                        ),
+                        title: Text("Turma: ${turma['tur_numero']}"),
+                        subtitle: Text(subtitulo),
                         trailing: IconButton(
                           icon: const Icon(Icons.edit, size: 20),
                           onPressed: () {
