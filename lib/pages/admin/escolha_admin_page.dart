@@ -55,7 +55,7 @@ class _AdminEscolhaPageState extends State<AdminEscolha> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const StudentSelection(),
+                    builder: (context) => const StudentSelection(turmaId: null),
                   ),
                 );
               },

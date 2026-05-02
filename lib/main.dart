@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tea_agenda/data/local/database.dart';
 import 'package:tea_agenda/pages/functions/calendar_controller.dart';
 import 'package:tea_agenda/pages/login_page.dart';
+import 'package:tea_agenda/pages/school_selection.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

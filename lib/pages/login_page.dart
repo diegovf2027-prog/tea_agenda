@@ -15,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailField = TextEditingController();
   final TextEditingController passwordField = TextEditingController();
   final _usuariosRepo = UsuariosRepository();
+
   bool _loading = false;
   bool _obscurePassword = true;
 
@@ -58,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Erro ao conectar ao servidor.'),
           backgroundColor: Colors.red,
         ),
@@ -67,34 +68,6 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) setState(() => _loading = false);
     }
   }
-
-  /*
-  void login() {
-    String email = emailField.text;
-    String senha = passwordField.text;
-
-    if (email == 'admin' && senha == 'admin') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const AdminEscolha()),
-      );
-    } else if (email == 'professor' && senha == 'professor') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const StudentSelection()),
-      );
-    } else if (email == '1' && senha == '1') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const StudentSelection()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email ou senha incorretos')),
-      );
-    }
-  }
-  */
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 40),
+
                 SizedBox(
                   width: 350,
                   child: TextField(
@@ -125,6 +99,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 20),
+
                 SizedBox(
                   width: 350,
                   child: TextField(
@@ -132,12 +107,25 @@ class _LoginPageState extends State<LoginPage> {
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       labelText: 'Senha',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
                   ),
                 ),
 
                 const SizedBox(height: 30),
+
                 _loading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(

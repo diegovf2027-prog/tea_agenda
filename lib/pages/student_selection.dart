@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tea_agenda/pages/student_page.dart';
 
 class StudentSelection extends StatelessWidget {
-  const StudentSelection({super.key});
+  const StudentSelection({super.key, required turmaId});
 
   final List<String> studentList = const [
     "Aluno 1",
