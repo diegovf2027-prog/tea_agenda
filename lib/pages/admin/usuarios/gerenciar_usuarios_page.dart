@@ -111,7 +111,7 @@ class _GerenciarUsuariosPageState extends State<GerenciarUsuariosPage> {
                     ),
                 ],
             ),
-            floatingActionButton: FloatingActionButton(
+            floatingActionButton: FloatingActionButton.extended(
                 onPressed: () {
                     Navigator.push(
                         context,
@@ -120,7 +120,8 @@ class _GerenciarUsuariosPageState extends State<GerenciarUsuariosPage> {
                         ),
                     );
                 },
-                child: const Icon(Icons.add),
+                label: const Text("Novo Usuário"),
+                icon: const Icon(Icons.add),
             ),
         );
     }

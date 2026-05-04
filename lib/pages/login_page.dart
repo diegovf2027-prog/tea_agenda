@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tea_agenda/data/repositories/usuarios_repository.dart';
 import 'package:tea_agenda/pages/admin/escolha_admin_page.dart';
-import 'package:tea_agenda/pages/school_selection.dart';
+import 'package:tea_agenda/pages/professores/class_selection.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,7 +15,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailField = TextEditingController();
   final TextEditingController passwordField = TextEditingController();
   final _usuariosRepo = UsuariosRepository();
-
   bool _loading = false;
   bool _obscurePassword = true;
 
@@ -48,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
           } else {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const SchoolSelection()),
+              MaterialPageRoute(builder: (context) => const ClassSelection()),
             );
           }
         }
@@ -59,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Erro ao conectar ao servidor.'),
           backgroundColor: Colors.red,
         ),
@@ -85,7 +84,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 40),
-
                 SizedBox(
                   width: 350,
                   child: TextField(
@@ -99,7 +97,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 20),
-
                 SizedBox(
                   width: 350,
                   child: TextField(
@@ -107,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       labelText: 'Senha',
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
@@ -125,7 +122,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
 
                 const SizedBox(height: 30),
-
                 _loading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(

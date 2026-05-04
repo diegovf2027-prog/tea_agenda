@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tea_agenda/pages/login_page.dart';
 import 'package:tea_agenda/pages/admin/admin.dart';
-import 'package:tea_agenda/pages/student_selection.dart';
+import 'package:tea_agenda/pages/professores/class_selection.dart';
 
 class AdminEscolha extends StatefulWidget {
   const AdminEscolha({super.key});
@@ -55,7 +55,7 @@ class _AdminEscolhaPageState extends State<AdminEscolha> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const StudentSelection(turmaId: null),
+                    builder: (context) => const ClassSelection(),
                   ),
                 );
               },

@@ -110,7 +110,7 @@ class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
             context,
@@ -119,7 +119,8 @@ class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
             ),
           );
         },
-        child: const Icon(Icons.add),
+        label: const Text("Nova Turma"),
+        icon: const Icon(Icons.add),
       ),
     );
   }

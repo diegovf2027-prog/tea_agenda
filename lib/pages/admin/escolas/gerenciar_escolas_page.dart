@@ -115,7 +115,7 @@ class _GerenciarEscolasPageState extends State<GerenciarEscolasPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
             context,
@@ -124,7 +124,8 @@ class _GerenciarEscolasPageState extends State<GerenciarEscolasPage> {
             ),
           );
         },
-        child: const Icon(Icons.add),
+        label: const Text("Nova Escola"),
+        icon: const Icon(Icons.add),
       ),
     );
   }
