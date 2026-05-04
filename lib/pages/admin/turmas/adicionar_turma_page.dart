@@ -144,7 +144,7 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
 
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
-                value: _turnoIdSelecionado,
+                initialValue: _turnoIdSelecionado,
                 isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Turno',
@@ -164,7 +164,7 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
 
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
-                value: _anoIdSelecionado,
+                initialValue: _anoIdSelecionado,
                 isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Ano Letivo',
@@ -184,7 +184,7 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
 
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
-                value: _escolaIdSelecionada,
+                initialValue: _escolaIdSelecionada,
                 decoration: const InputDecoration(
                   labelText: 'Escola vinculada',
                   prefixIcon: Icon(Icons.school),
@@ -212,7 +212,7 @@ class _AdicionarTurmaPageState extends State<AdicionarTurmaPage> {
 
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _professorIdSelecionado,
+                initialValue: _professorIdSelecionado,
                 disabledHint: const Text("Selecione uma escola primeiro"),
                 decoration: const InputDecoration(
                   labelText: 'Professor responsável',

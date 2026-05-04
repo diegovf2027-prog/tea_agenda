@@ -95,14 +95,15 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
   }
 
   Future<void> _selecionarData(BuildContext context) async {
-    final DateTime? data_selecionada = await showDatePicker(
+    final DateTime? dataSelecionada = await showDatePicker(
       context: context,
       initialDate: _dataNascimento ?? DateTime(2015),
       firstDate: DateTime(2010),
       lastDate: DateTime.now(),
     );
-    if (data_selecionada != null)
-      setState(() => _dataNascimento = data_selecionada);
+    if (dataSelecionada != null) {
+      setState(() => _dataNascimento = dataSelecionada);
+    }
   }
 
   Future<void> _salvarAluno() async {
@@ -146,8 +147,9 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_carregando)
+    if (_carregando) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -198,7 +200,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
 
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
-                value: _escolaIdSelecionada,
+                initialValue: _escolaIdSelecionada,
                 decoration: const InputDecoration(
                   labelText: 'Escola vinculada',
                   prefixIcon: Icon(Icons.school),
@@ -224,7 +226,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
 
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
-                value: _turmaIdSelecionada,
+                initialValue: _turmaIdSelecionada,
                 decoration: const InputDecoration(
                   labelText: 'Turma',
                   prefixIcon: Icon(Icons.groups_3),
@@ -246,7 +248,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
 
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _cuidadorIdSelecionado,
+                initialValue: _cuidadorIdSelecionado,
                 decoration: const InputDecoration(
                   labelText: 'Responsável (Cuidador)',
                   prefixIcon: Icon(Icons.person_pin),

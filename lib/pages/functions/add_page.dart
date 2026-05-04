@@ -245,23 +245,7 @@ class _AddPageState extends State<AddPage> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Importar Foto',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Selecionar imagem'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+
           if (_selectedImage != null) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
