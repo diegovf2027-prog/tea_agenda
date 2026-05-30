@@ -1,68 +1,78 @@
-import 'package:table_calendar/table_calendar.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart';
 
 class CalendarController extends GetxController {
+  final supabase = Supabase.instance.client;
+  final int alunoId;
+
+  CalendarController({required this.alunoId});
+  
   late DateTime firstDay;
   late DateTime lastDay;
-  late DateTime focusedDay;
+  DateTime focusedDay = DateTime.now();
+  DateTime selectedDay = DateTime.now();
 
-  List<String> agenda = [];
-  final Map<DateTime, List<String>> _records = {};
+  final Map<DateTime, Map<String, dynamic>> _recordsByDate = {};
 
-  CalendarFormat calendarFormat = CalendarFormat.month;
-
-  String locale = 'pt_BR';
+  Map<String, dynamic>? selectedRecord;
+  bool carregando = true;
 
   @override
   void onInit() {
-    firstDay = DateTime.now().add(const Duration(days: -365));
+    firstDay = DateTime.now().subtract(const Duration(days: 365));
     lastDay = DateTime.now().add(const Duration(days: 365));
-    focusedDay = DateTime.now();
-
-    _loadMockRecords();
-    getDayReport(focusedDay);
-
+    fetchRecords();
     super.onInit();
   }
 
-  Future<void> getDayReport(DateTime date) async {
-    focusedDay = date;
-    agenda = _loadDayRecords(date);
-    update(['calendario', 'agenda']);
-  }
+  Future<void> fetchRecords() async {
+    try {
+      carregando = true;
+      update(['calendario', 'agenda']);
+      final data = await supabase.from('registros').select('''
+        *,
+        alimentacao:reg_alimentacao(ali_status),
+        comportamento:reg_comportamento(com_status),
+        atividades:reg_atividade(ati_status)
+      ''').eq('reg_aluno', alunoId);
 
-  List<String> _loadDayRecords(DateTime date) {
-    final normalized = _normalizeDate(date);
-    return _records[normalized] ?? [];
-  }
+      _recordsByDate.clear();
+      selectedRecord = null;
 
-  void addDayRecord(DateTime date, String record) {
-    final normalized = _normalizeDate(date);
-    final list = _records.putIfAbsent(normalized, () => []);
-    list.add(record);
+      for (var reg in data) {
+        final date = DateTime.parse(reg['reg_created_at']);
+        _recordsByDate[DateTime(date.year, date.month, date.day)] = reg;
+      }
 
-    if (isSameDay(date, focusedDay)) {
-      getDayReport(date);
+      onDaySelected(selectedDay, focusedDay);
+    } catch (e) {
+      print("Erro ao carregar calendário: $e");
+    } finally {
+      carregando = false;
+      update(['calendario', 'agenda']);
     }
   }
 
-  DateTime _normalizeDate(DateTime date) {
-    return DateTime(date.year, date.month, date.day);
+  void onDaySelected(DateTime selected, DateTime focused) {
+    selectedDay = selected;
+    focusedDay = focused;
+    selectedRecord = _recordsByDate[DateTime(selected.year, selected.month, selected.day)];
+    update(['calendario', 'agenda']);
   }
 
-  void _loadMockRecords() {
-    final today = _normalizeDate(DateTime.now());
-    _records[today] = [
-      'Registro exemplo: criança chegou bem disposta',
-      'Observação: realizou todas as atividades',
-    ];
-    _records[_normalizeDate(DateTime.now().subtract(const Duration(days: 1)))] =
-        ['Registro de ontem: apresentou dificuldade em concentração'];
-    _records[_normalizeDate(DateTime(today.year, 5, 1))] = [
-      'Alimentação: ',
-      'Atividades: ',
-      'Humor: ',
-      'Observações: ',
-    ];
+  Color getHumorColor(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    final reg = _recordsByDate[day];
+    if (reg == null) return Colors.transparent;
+
+    switch (reg['reg_humor']) {
+      case 1: return const Color(0xFFD40000); // Muito Ruim
+      case 2: return const Color(0xFFD87A00); // Ruim
+      case 3: return const Color(0xFFFFD900); // Neutro
+      case 4: return const Color(0xFF32AF00); // Bom
+      case 5: return const Color(0xFF7B02DF); // Muito Bom
+      default: return Colors.transparent;
+    }
   }
 }

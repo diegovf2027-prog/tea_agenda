@@ -3,7 +3,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:tea_agenda/pages/functions/calendar_controller.dart';
 import 'package:tea_agenda/pages/login_page.dart';
 
 void main() async {
@@ -31,9 +30,6 @@ class MyApp extends StatelessWidget {
       supportedLocales: const [Locale('pt', 'BR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: ThemeData(primarySwatch: Colors.blue),
-      initialBinding: BindingsBuilder(() {
-        Get.put(CalendarController());
-      }),
       home: const LoginPage(),
     );
   }

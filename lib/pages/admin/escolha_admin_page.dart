@@ -12,20 +12,7 @@ class AdminEscolha extends StatefulWidget {
 }
 
 class _AdminEscolhaPageState extends State<AdminEscolha> {
-  // Função para deslogar
-  Future<void> _deslogar() async {
-    final supabase = Supabase.instance.client;
-
-    await supabase.auth.signOut();
-
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-      (route) => false,
-    );
-  }
+  final supabase = Supabase.instance.client;
 
   @override
   Widget build(BuildContext context) {
@@ -60,16 +47,9 @@ class _AdminEscolhaPageState extends State<AdminEscolha> {
                 );
               },
             ),
+            const SizedBox(height: 8),
+            _buildBotaoDeslogar(),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _deslogar,
-              icon: const Icon(Icons.logout),
-              label: const Text('Sair do Sistema'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red[50],
-                foregroundColor: Colors.red,
-              ),
-            ),
           ],
         ),
       ),
@@ -91,4 +71,32 @@ class _AdminEscolhaPageState extends State<AdminEscolha> {
       ),
     );
   }
+
+  Widget _buildBotaoDeslogar() {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: () async {
+          try {
+            await supabase.auth.signOut();
+            if (mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+                (route) => false,
+              );
+            }
+          } catch (e) {
+            debugPrint("Erro ao deslogar: $e");
+          }
+        },
+        icon: const Icon(Icons.logout),
+        label: const Text('Sair do Sistema'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red[50],
+          foregroundColor: Colors.red,
+        ),
+      ),
+    );
+  }
 }
+
+

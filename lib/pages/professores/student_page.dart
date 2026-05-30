@@ -6,8 +6,9 @@ import 'package:tea_agenda/pages/functions/add_page.dart';
 
 class StudentPage extends StatefulWidget {
   final String name;
+  final int alunoId;
 
-  const StudentPage({super.key, required this.name});
+  const StudentPage({super.key, required this.name, required this.alunoId});
 
   @override
   State<StudentPage> createState() => _StudentPageState();
@@ -17,18 +18,7 @@ class _StudentPageState extends State<StudentPage> {
   int _selectedIndex = -1; // -1 mostra o feed inicial
 
   // Seções sem o Feed na navegação inferior
-  late List<Widget> pages;
   final List<String> pageTitles = ['Relatórios', 'Calendário', 'Adicionar'];
-
-  @override
-  void initState() {
-    super.initState();
-    pages = [
-      _buildRelatorioSection(),
-      _buildCalendarioSection(),
-      _buildAdicaoSection(),
-    ];
-  }
 
   void _onNavItemTapped(int index) {
     setState(() {
@@ -46,6 +36,23 @@ class _StudentPageState extends State<StudentPage> {
     }
   }
 
+  Widget _getBodyContent() {
+    if (_selectedIndex == -1) {
+      return _buildFeedSection();
+    }
+
+    switch (_selectedIndex) {
+      case 0:
+        return ReportsPage(alunoId: widget.alunoId);
+      case 1:
+        return CalendarPage(alunoId: widget.alunoId);
+      case 2:
+        return _buildAdicaoSection(widget.alunoId);
+      default:
+        return _buildFeedSection();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isFeed = _selectedIndex == -1;
@@ -58,7 +65,7 @@ class _StudentPageState extends State<StudentPage> {
           onPressed: _goBack,
         ),
       ),
-      body: isFeed ? _buildFeedSection() : pages[_selectedIndex],
+      body: _getBodyContent(), 
       bottomNavigationBar: SizedBox(
         height: 120,
         child: BottomNavBar(
@@ -130,15 +137,7 @@ class _StudentPageState extends State<StudentPage> {
     );
   }
 
-  Widget _buildRelatorioSection() {
-    return const ReportsPage();
-  }
-
-  Widget _buildCalendarioSection() {
-    return const CalendarPage();
-  }
-
-  Widget _buildAdicaoSection() {
-    return const AddPage();
+  Widget _buildAdicaoSection(int idDoAluno) {
+    return AddPage(alunoId: idDoAluno); 
   }
 }
