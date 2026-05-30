@@ -5,6 +5,7 @@ import 'package:excel/excel.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 class ReportsPage extends StatefulWidget {
@@ -137,7 +138,7 @@ class _ReportsPageState extends State<ReportsPage> {
                 setState(() => _shareFormat = value!);
               },
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -220,11 +221,7 @@ class _ReportsPageState extends State<ReportsPage> {
         return;
       }
 
-      if (_shareFormat == 'pdf') {
-        await _gerarPDF(dados);
-      } else {
-        await _gerarExcel(dados);
-      }
+      await _showReportOptions(dados);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -237,8 +234,160 @@ class _ReportsPageState extends State<ReportsPage> {
     }
   }
 
-  // Relatório em Excel
-  Future<void> _gerarExcel(List<Map<String, dynamic>> dados) async {
+  Future<void> _showReportOptions(List<Map<String, dynamic>> dados) async {
+    final format = _shareFormat;
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'O que deseja fazer com o ${format.toUpperCase()}?',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.of(context).pop('preview'),
+                  icon: const Icon(Icons.visibility),
+                  label: Text('Visualizar ${format.toUpperCase()}'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).pop('download'),
+                  icon: const Icon(Icons.download),
+                  label: Text('Baixar ${format.toUpperCase()}'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancelar'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected == 'preview') {
+      if (format == 'pdf') {
+        await _generateAndPreviewPdf(dados);
+      } else {
+        await _generateAndPreviewExcel(dados);
+      }
+    } else if (selected == 'download') {
+      if (format == 'pdf') {
+        await _generateAndDownloadPdf(dados);
+      } else {
+        await _generateAndDownloadExcel(dados);
+      }
+    }
+  }
+
+  Future<void> _generateAndPreviewPdf(List<Map<String, dynamic>> dados) async {
+    setState(() => _gerando = true);
+    try {
+      final file = await _gerarPDF(dados);
+      await OpenFilex.open(file.path);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao visualizar o PDF: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _gerando = false);
+    }
+  }
+
+  Future<void> _generateAndDownloadPdf(List<Map<String, dynamic>> dados) async {
+    setState(() => _gerando = true);
+    try {
+      final file = await _gerarPDF(dados, saveInDocuments: true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('PDF salvo em: ${file.path}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao salvar o PDF: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _gerando = false);
+    }
+  }
+
+  Future<void> _generateAndPreviewExcel(
+    List<Map<String, dynamic>> dados,
+  ) async {
+    setState(() => _gerando = true);
+    try {
+      final file = await _gerarExcel(dados);
+      await OpenFilex.open(file.path);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao visualizar o Excel: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _gerando = false);
+    }
+  }
+
+  Future<void> _generateAndDownloadExcel(
+    List<Map<String, dynamic>> dados,
+  ) async {
+    setState(() => _gerando = true);
+    try {
+      final file = await _gerarExcel(dados, saveInDocuments: true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Excel salvo em: ${file.path}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao salvar o Excel: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _gerando = false);
+    }
+  }
+
+  Future<File> _gerarExcel(
+    List<Map<String, dynamic>> dados, {
+    bool saveInDocuments = false,
+  }) async {
     var excel = Excel.createExcel();
     Sheet sheetObject = excel['Relatorio_TEA'];
     excel.delete('Sheet1');
@@ -272,19 +421,21 @@ class _ReportsPageState extends State<ReportsPage> {
     }
 
     final fileBytes = excel.save();
-    final directory = await getTemporaryDirectory();
+    final directory = saveInDocuments
+        ? await getApplicationDocumentsDirectory()
+        : await getTemporaryDirectory();
     final file = File(
       '${directory.path}/relatorio_aluno_${widget.alunoId}.xlsx',
     );
     await file.writeAsBytes(fileBytes!);
-
-    await Share.shareXFiles([
-      XFile(file.path),
-    ], text: 'Exportação de planilha concluída.');
+    return file;
   }
 
   // Relatório em PDF
-  Future<void> _gerarPDF(List<Map<String, dynamic>> dados) async {
+  Future<File> _gerarPDF(
+    List<Map<String, dynamic>> dados, {
+    bool saveInDocuments = false,
+  }) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -353,15 +504,105 @@ class _ReportsPageState extends State<ReportsPage> {
       ),
     );
 
-    final directory = await getTemporaryDirectory();
+    final directory = saveInDocuments
+        ? await getApplicationDocumentsDirectory()
+        : await getTemporaryDirectory();
     final file = File(
       '${directory.path}/relatorio_aluno_${widget.alunoId}.pdf',
     );
     await file.writeAsBytes(await pdf.save());
+    return file;
+  }
 
-    await Share.shareXFiles([
-      XFile(file.path),
-    ], text: 'Exportação de arquivo PDF concluída.');
+  Future<void> _previewPdfReport() async {
+    setState(() => _gerando = true);
+    try {
+      final dados = await _fetchReportData();
+      if (dados.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nenhum registro encontrado no período selecionado.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      final file = await _gerarPDF(dados);
+      await OpenFilex.open(file.path);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao visualizar o PDF: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _gerando = false);
+    }
+  }
+
+  Future<void> _downloadPdfReport() async {
+    setState(() => _gerando = true);
+    try {
+      final dados = await _fetchReportData();
+      if (dados.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nenhum registro encontrado no período selecionado.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      final file = await _gerarPDF(dados, saveInDocuments: true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('PDF salvo em: ${file.path}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao salvar o PDF: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => _gerando = false);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchReportData() async {
+    final dataFimFiltro = DateTime(
+      _endDate.year,
+      _endDate.month,
+      _endDate.day,
+      23,
+      59,
+      59,
+    );
+
+    var query = supabase
+        .from('registros')
+        .select('''
+      *,
+      alimentacao:reg_alimentacao(ali_status),
+      comportamento:reg_comportamento(com_status),
+      atividades:reg_atividade(ati_status)
+    ''')
+        .eq('reg_aluno', widget.alunoId)
+        .gte('reg_created_at', _startDate.toIso8601String())
+        .lte('reg_created_at', dataFimFiltro.toIso8601String());
+
+    if (_humorSelecionado.isNotEmpty) {
+      query = query.inFilter('reg_humor', _humorSelecionado);
+    }
+
+    final finalQuery = query.order('reg_created_at', ascending: true);
+    return List<Map<String, dynamic>>.from(await finalQuery);
   }
 
   void _selectStartDate(BuildContext context) async {

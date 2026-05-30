@@ -179,13 +179,34 @@ class _AddPageState extends State<AddPage> {
   Widget build(BuildContext context) {
     if (_carregando) return const Center(child: CircularProgressIndicator());
 
-    final dataExibicao = widget.dataSelecionada ?? DateTime.now();
+    final dataExibicao =
+        widget.dataSelecionada ??
+        (widget.registroDia != null &&
+                widget.registroDia!['reg_created_at'] != null
+            ? DateTime.parse(widget.registroDia!['reg_created_at'])
+            : DateTime.now());
     final dataFormatada =
         '${dataExibicao.day}/${dataExibicao.month}/${dataExibicao.year}';
+    final today = DateTime.now();
+    final selectedDay = DateTime(
+      dataExibicao.year,
+      dataExibicao.month,
+      dataExibicao.day,
+    );
+    final showBackNavigation =
+        widget.registroDia != null ||
+        (widget.dataSelecionada != null &&
+            selectedDay.isBefore(DateTime(today.year, today.month, today.day)));
 
     return Scaffold(
-      appBar: widget.registroDia != null
-          ? AppBar(title: const Text("Editar Registro"))
+      appBar: showBackNavigation
+          ? AppBar(
+              title: Text(
+                widget.registroDia != null
+                    ? "Editar Registro"
+                    : "Novo Registro",
+              ),
+            )
           : null,
       body: SafeArea(
         child: SingleChildScrollView(

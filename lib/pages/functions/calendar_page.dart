@@ -44,7 +44,8 @@ class CalendarPage extends StatelessWidget {
                   },
                   headerStyle: const HeaderStyle(formatButtonVisible: false),
 
-                  selectedDayPredicate: (day) => isSameDay(day, controller.selectedDay),
+                  selectedDayPredicate: (day) =>
+                      isSameDay(day, controller.selectedDay),
 
                   onDaySelected: (selectedDay, focusedDay) {
                     controller.onDaySelected(selectedDay, focusedDay);
@@ -57,14 +58,48 @@ class CalendarPage extends StatelessWidget {
                         margin: const EdgeInsets.all(4.0),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: color != Colors.transparent ? color.withOpacity(0.15) : null,
+                          color: color != Colors.transparent
+                              ? color.withOpacity(0.15)
+                              : null,
                           shape: BoxShape.circle,
-                          border: color != Colors.transparent ? Border.all(color: color, width: 1.5) : null,
+                          border: color != Colors.transparent
+                              ? Border.all(color: color, width: 1.5)
+                              : null,
                         ),
                         child: Text(
                           '${day.day}',
                           style: TextStyle(
-                            fontWeight: color != Colors.transparent ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: color != Colors.transparent
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                      );
+                    },
+
+                    todayBuilder: (context, day, focusedDay) {
+                      final color = controller.getHumorColor(day);
+                      return Container(
+                        margin: const EdgeInsets.all(4.0),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: color != Colors.transparent
+                              ? color.withOpacity(0.15)
+                              : Colors.blue.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: color != Colors.transparent
+                                ? color
+                                : Colors.blue,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Text(
+                          '${day.day}',
+                          style: TextStyle(
+                            fontWeight: color != Colors.transparent
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                         ),
                       );
@@ -76,12 +111,17 @@ class CalendarPage extends StatelessWidget {
                         margin: const EdgeInsets.all(4.0),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: color != Colors.transparent ? color : Colors.blue,
+                          color: color != Colors.transparent
+                              ? color
+                              : Colors.blue,
                           shape: BoxShape.circle,
                         ),
                         child: Text(
                           '${day.day}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       );
                     },
@@ -111,7 +151,8 @@ class CalendarPage extends StatelessWidget {
 
     if (record == null) {
       final dataSelecionada = controller.selectedDay;
-      final dataFormatada = "${dataSelecionada.day}/${dataSelecionada.month}/${dataSelecionada.year}";
+      final dataFormatada =
+          "${dataSelecionada.day}/${dataSelecionada.month}/${dataSelecionada.year}";
 
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -120,7 +161,11 @@ class CalendarPage extends StatelessWidget {
           children: [
             Text(
               'Nenhum registro salvo para esse dia.',
-              style: const TextStyle(fontSize: 16, color: Colors.grey, fontStyle: FontStyle.italic),
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+              ),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -128,17 +173,23 @@ class CalendarPage extends StatelessWidget {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  await Get.to(() => AddPage(
-                        alunoId: alunoId,
-                        registroDia: null,
-                        dataSelecionada: dataSelecionada,
-                      ));
+                  await Get.to(
+                    () => AddPage(
+                      alunoId: alunoId,
+                      registroDia: null,
+                      dataSelecionada: dataSelecionada,
+                    ),
+                  );
                   controller.fetchRecords();
                 },
                 icon: const Icon(Icons.add, color: Colors.white),
                 label: Text(
                   'Realizar registro do dia $dataFormatada',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
@@ -153,22 +204,29 @@ class CalendarPage extends StatelessWidget {
       );
     }
 
-    final String alimentacaoStatus = record['alimentacao'] != null ? record['alimentacao']['ali_status'] ?? 'Não informado' : 'Não informado';
-    final String comportamentoStatus = record['comportamento'] != null ? record['comportamento']['com_status'] ?? 'Não informado' : 'Não informado';
-    final String atividadeStatus = record['atividades'] != null ? record['atividades']['ati_status'] ?? 'Não informado' : 'Não informado';
+    final String alimentacaoStatus = record['alimentacao'] != null
+        ? record['alimentacao']['ali_status'] ?? 'Não informado'
+        : 'Não informado';
+    final String comportamentoStatus = record['comportamento'] != null
+        ? record['comportamento']['com_status'] ?? 'Não informado'
+        : 'Não informado';
+    final String atividadeStatus = record['atividades'] != null
+        ? record['atividades']['ati_status'] ?? 'Não informado'
+        : 'Não informado';
 
     // Observações do dia
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         children: [
-          if (record['reg_observacao'] != null && record['reg_observacao'].toString().isNotEmpty)
-          _buildRecordCard(
-            title: "Observação do Dia",
-            content: record['reg_observacao'].toString(),
-            icon: Icons.notes,
-            iconColor: Colors.blue,
-          ),
+          if (record['reg_observacao'] != null &&
+              record['reg_observacao'].toString().isNotEmpty)
+            _buildRecordCard(
+              title: "Observação do Dia",
+              content: record['reg_observacao'].toString(),
+              icon: Icons.notes,
+              iconColor: Colors.blue,
+            ),
 
           _buildRecordCard(
             title: "Alimentação",
@@ -197,17 +255,24 @@ class CalendarPage extends StatelessWidget {
             height: 50,
             child: ElevatedButton.icon(
               onPressed: () async {
-                await Get.to(() => AddPage(
-                  alunoId: alunoId,
-                  registroDia: record,
-                ));
+                await Get.to(
+                  () => AddPage(
+                    alunoId: alunoId,
+                    registroDia: record,
+                    dataSelecionada: controller.selectedDay,
+                  ),
+                );
 
                 controller.fetchRecords();
               },
               icon: const Icon(Icons.edit, color: Colors.white),
               label: const Text(
                 'Editar Registro',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
@@ -248,7 +313,11 @@ class CalendarPage extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.black,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(

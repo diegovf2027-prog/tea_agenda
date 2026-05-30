@@ -39,13 +39,15 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
       _emailController.text = widget.usuarioEdicao!['usu_email'];
       if (widget.usuarioEdicao!['usu_dt_nascimento'] != null) {
         setState(() {
-          _dataNascimento = DateTime.parse(widget.usuarioEdicao!['usu_dt_nascimento']);
+          _dataNascimento = DateTime.parse(
+            widget.usuarioEdicao!['usu_dt_nascimento'],
+          );
         });
       }
       setState(() {
-      _cargoIdSelecionado = widget.usuarioEdicao!['usu_cargo']; 
-      _escolaIdSelecionada = widget.usuarioEdicao!['usu_escola'];
-    });
+        _cargoIdSelecionado = widget.usuarioEdicao!['usu_cargo'];
+        _escolaIdSelecionada = widget.usuarioEdicao!['usu_escola'];
+      });
     }
   }
 
@@ -78,7 +80,7 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
         _dataNascimento != null &&
         _escolaIdSelecionada != null &&
         _cargoIdSelecionado != null) {
-      final cpfLimpo = _nomeController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      final cpfLimpo = _cpfController.text.replaceAll(RegExp(r'[^0-9]'), '');
 
       try {
         if (widget.usuarioEdicao != null) {
@@ -152,6 +154,8 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
                   labelText: 'Nome Completo',
                   prefixIcon: Icon(Icons.person),
                 ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Informe o nome' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
