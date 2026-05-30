@@ -7,7 +7,12 @@ class AddPage extends StatefulWidget {
   final int alunoId;
   final Map<String, dynamic>? registroDia;
   final DateTime? dataSelecionada;
-  const AddPage({super.key, required this.alunoId, this.registroDia, this.dataSelecionada});
+  const AddPage({
+    super.key,
+    required this.alunoId,
+    this.registroDia,
+    this.dataSelecionada,
+  });
 
   @override
   State<AddPage> createState() => _AddPageState();
@@ -20,7 +25,7 @@ class _AddPageState extends State<AddPage> {
 
   int? _idAlimentacao;
   int? _idAtividade;
-  int?_idComportamento;
+  int? _idComportamento;
   int _idHumor = 3;
 
   List<Map<String, dynamic>> _opcaoAlimentacao = [];
@@ -67,7 +72,10 @@ class _AddPageState extends State<AddPage> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final XFile? pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
 
     if (pickedFile != null) {
       setState(() {
@@ -77,9 +85,16 @@ class _AddPageState extends State<AddPage> {
   }
 
   Future<void> _salvarRegistro() async {
-    if (_idAlimentacao == null || _idAtividade == null || _idComportamento == null) {
+    if (_idAlimentacao == null ||
+        _idAtividade == null ||
+        _idComportamento == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preencha os campos de Alimentação, Atividade e Comportamento'), backgroundColor: Colors.orange),
+        const SnackBar(
+          content: Text(
+            'Preencha os campos de Alimentação, Atividade e Comportamento',
+          ),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
@@ -98,10 +113,16 @@ class _AddPageState extends State<AddPage> {
 
     try {
       if (widget.registroDia != null) {
-        await supabase.from('registros').update(registroDados).eq('reg_id', widget.registroDia!['reg_id']);
+        await supabase
+            .from('registros')
+            .update(registroDados)
+            .eq('reg_id', widget.registroDia!['reg_id']);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registro atualizado com sucesso!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Registro atualizado com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
         );
 
         Navigator.of(context).pop();
@@ -109,13 +130,19 @@ class _AddPageState extends State<AddPage> {
         await supabase.from('registros').insert(registroDados);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registro salvo com sucesso!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Registro salvo com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
         );
         _resetForm();
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao salvar: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Erro ao salvar: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -133,12 +160,18 @@ class _AddPageState extends State<AddPage> {
 
   Color _corHumor(int humorId) {
     switch (humorId) {
-      case 1: return const Color(0xFFD40000);
-      case 2: return const Color(0xFFD87A00);
-      case 3: return const Color(0xFFFFD900);
-      case 4: return const Color(0xFF32AF00);
-      case 5: return const Color(0xFF7B02DF);
-      default: return Colors.grey;
+      case 1:
+        return const Color(0xFFD40000);
+      case 2:
+        return const Color(0xFFD87A00);
+      case 3:
+        return const Color(0xFFFFD900);
+      case 4:
+        return const Color(0xFF32AF00);
+      case 5:
+        return const Color(0xFF7B02DF);
+      default:
+        return Colors.grey;
     }
   }
 
@@ -147,7 +180,8 @@ class _AddPageState extends State<AddPage> {
     if (_carregando) return const Center(child: CircularProgressIndicator());
 
     final dataExibicao = widget.dataSelecionada ?? DateTime.now();
-    final dataFormatada = '${dataExibicao.day}/${dataExibicao.month}/${dataExibicao.year}';
+    final dataFormatada =
+        '${dataExibicao.day}/${dataExibicao.month}/${dataExibicao.year}';
 
     return Scaffold(
       appBar: widget.registroDia != null
@@ -159,33 +193,76 @@ class _AddPageState extends State<AddPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Avaliação do dia - $dataFormatada', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                'Avaliação do dia - $dataFormatada',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
 
               _buildLabel("Alimentação"),
-              _buildDropdown(_opcaoAlimentacao, _idAlimentacao, (val) => setState(() => _idAlimentacao = val), 'ali_id', 'nome'),
+              _buildDropdown(
+                _opcaoAlimentacao,
+                _idAlimentacao,
+                (val) => setState(() => _idAlimentacao = val),
+                'ali_id',
+                'nome',
+              ),
 
               _buildLabel("Atividades"),
-              _buildDropdown(_opcaoAtividades, _idAtividade, (val) => setState(() => _idAtividade = val), 'ati_id', 'nome'),
+              _buildDropdown(
+                _opcaoAtividades,
+                _idAtividade,
+                (val) => setState(() => _idAtividade = val),
+                'ati_id',
+                'nome',
+              ),
 
               _buildLabel("Comportamento"),
-              _buildDropdown(_opcaoComportamento, _idComportamento, (val) => setState(() => _idComportamento = val), 'com_id', 'nome'),
+              _buildDropdown(
+                _opcaoComportamento,
+                _idComportamento,
+                (val) => setState(() => _idComportamento = val),
+                'com_id',
+                'nome',
+              ),
               const SizedBox(height: 24),
-              const Text('Observações', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                'Observações',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: _observationController,
                 maxLines: 3,
-                decoration: InputDecoration(hintText: 'Notas sobre o dia...', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+                decoration: InputDecoration(
+                  hintText: 'Notas sobre o dia...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
 
               const SizedBox(height: 16),
-              const Text('Foto do Registro', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              IconButton(onPressed: _pickImage, icon: const Icon(Icons.add_a_photo, size: 40, color: Colors.blue)),
-              if (_imagemSelecionada != null) Image.file(_imagemSelecionada!, height: 150),
+              const Text(
+                'Foto do Registro',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              IconButton(
+                onPressed: _pickImage,
+                icon: const Icon(
+                  Icons.add_a_photo,
+                  size: 40,
+                  color: Colors.blue,
+                ),
+              ),
+              if (_imagemSelecionada != null)
+                Image.file(_imagemSelecionada!, height: 150),
 
               const SizedBox(height: 24),
-              const Text('Humor do Dia', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                'Humor do Dia',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 16),
 
               Row(
@@ -197,7 +274,9 @@ class _AddPageState extends State<AddPage> {
                       child: Icon(
                         Icons.face,
                         size: 45,
-                        color: i <= _idHumor ? _corHumor(_idHumor) : Colors.grey[300],
+                        color: i <= _idHumor
+                            ? _corHumor(_idHumor)
+                            : Colors.grey[300],
                       ),
                     ),
                 ],
@@ -210,7 +289,9 @@ class _AddPageState extends State<AddPage> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: _resetForm,
-                      style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
                       child: const Text("Limpar"),
                     ),
                   ),
@@ -218,7 +299,11 @@ class _AddPageState extends State<AddPage> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _salvarRegistro,
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 15)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
                       child: const Text("Salvar Registro"),
                     ),
                   ),
@@ -227,7 +312,7 @@ class _AddPageState extends State<AddPage> {
             ],
           ),
         ),
-      )
+      ),
     );
   }
 
@@ -236,14 +321,26 @@ class _AddPageState extends State<AddPage> {
     child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
   );
 
-  Widget _buildDropdown(List<Map<String, dynamic>> opcoes , int? valor, Function(int?) onChanged, String idKey, String textKey) {
+  Widget _buildDropdown(
+    List<Map<String, dynamic>> opcoes,
+    int? valor,
+    Function(int?) onChanged,
+    String idKey,
+    String textKey,
+  ) {
     return DropdownButtonFormField<int>(
-      value: valor,
+      initialValue: valor,
       hint: const Text("Selecione..."),
-      decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+      decoration: InputDecoration(
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
       items: opcoes.map((opt) {
-        final id = opt[idKey] ?? opt['id'] ?? opt.values.firstWhere((v) => v is int);
-        final nome = opt[textKey] ?? opt['nome'] ?? opt.values.firstWhere((v) => v is String);
+        final id =
+            opt[idKey] ?? opt['id'] ?? opt.values.firstWhere((v) => v is int);
+        final nome =
+            opt[textKey] ??
+            opt['nome'] ??
+            opt.values.firstWhere((v) => v is String);
         return DropdownMenuItem<int>(
           value: id as int,
           child: Text(nome.toString()),
@@ -253,4 +350,3 @@ class _AddPageState extends State<AddPage> {
     );
   }
 }
-

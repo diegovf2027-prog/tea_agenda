@@ -18,7 +18,7 @@ class ReportsPage extends StatefulWidget {
 
 class _ReportsPageState extends State<ReportsPage> {
   final supabase = Supabase.instance.client;
-  List<int> _humorSelecionado = [];
+  final List<int> _humorSelecionado = [];
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 7));
   DateTime _endDate = DateTime.now();
   String _shareFormat = 'pdf';
@@ -76,8 +76,12 @@ class _ReportsPageState extends State<ReportsPage> {
                   child: Text(
                     "Todos",
                     style: TextStyle(
-                      fontWeight: _humorSelecionado.isEmpty ? FontWeight.bold : FontWeight.normal,
-                      color: _humorSelecionado.isEmpty ? Colors.blue : Colors.grey,
+                      fontWeight: _humorSelecionado.isEmpty
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: _humorSelecionado.isEmpty
+                          ? Colors.blue
+                          : Colors.grey,
                     ),
                   ),
                 ),
@@ -102,7 +106,7 @@ class _ReportsPageState extends State<ReportsPage> {
                       Icons.face,
                       size: 45,
                       color: _humorSelecionado.contains(i)
-                          ? _corHumor(i) 
+                          ? _corHumor(i)
                           : Colors.grey[300],
                     ),
                   ),
@@ -115,10 +119,15 @@ class _ReportsPageState extends State<ReportsPage> {
             ),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              value: _shareFormat,
+              initialValue: _shareFormat,
               decoration: InputDecoration(
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
               ),
               items: const [
                 DropdownMenuItem(value: 'pdf', child: Text('PDF (.pdf)')),
@@ -134,16 +143,29 @@ class _ReportsPageState extends State<ReportsPage> {
               height: 50,
               child: ElevatedButton.icon(
                 onPressed: _gerando ? null : _fetchAndGenerateReport,
-                icon: _gerando 
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                icon: _gerando
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Icon(Icons.analytics, color: Colors.white),
                 label: Text(
                   _gerando ? "Processando..." : "Gerar Relatório",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -158,17 +180,26 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => _gerando = true);
 
     try {
-      final dataFimFiltro = DateTime(_endDate.year, _endDate.month, _endDate.day, 23, 59, 59);
+      final dataFimFiltro = DateTime(
+        _endDate.year,
+        _endDate.month,
+        _endDate.day,
+        23,
+        59,
+        59,
+      );
 
-      var query = supabase.from('registros').select('''
+      var query = supabase
+          .from('registros')
+          .select('''
         *,
         alimentacao:reg_alimentacao(ali_status),
         comportamento:reg_comportamento(com_status),
         atividades:reg_atividade(ati_status)
       ''')
-      .eq('reg_aluno', widget.alunoId)
-      .gte('reg_created_at', _startDate.toIso8601String())
-      .lte('reg_created_at', dataFimFiltro.toIso8601String());
+          .eq('reg_aluno', widget.alunoId)
+          .gte('reg_created_at', _startDate.toIso8601String())
+          .lte('reg_created_at', dataFimFiltro.toIso8601String());
 
       if (_humorSelecionado.isNotEmpty) {
         query = query.inFilter('reg_humor', _humorSelecionado);
@@ -180,7 +211,10 @@ class _ReportsPageState extends State<ReportsPage> {
 
       if (dados.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nenhum registro encontrado no período selecionado.'), backgroundColor: Colors.orange),
+          const SnackBar(
+            content: Text('Nenhum registro encontrado no período selecionado.'),
+            backgroundColor: Colors.orange,
+          ),
         );
         setState(() => _gerando = false);
         return;
@@ -193,7 +227,10 @@ class _ReportsPageState extends State<ReportsPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao coletar dados do relatório: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Erro ao coletar dados do relatório: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() => _gerando = false);
@@ -206,7 +243,9 @@ class _ReportsPageState extends State<ReportsPage> {
     Sheet sheetObject = excel['Relatorio_TEA'];
     excel.delete('Sheet1');
 
-    sheetObject.appendRow([TextCellValue('Relatório de Acompanhamento - TEAgenda')]);
+    sheetObject.appendRow([
+      TextCellValue('Relatório de Acompanhamento - TEAgenda'),
+    ]);
     sheetObject.appendRow([]);
     sheetObject.appendRow([
       TextCellValue('Data de Registro'),
@@ -214,12 +253,13 @@ class _ReportsPageState extends State<ReportsPage> {
       TextCellValue('Alimentação'),
       TextCellValue('Comportamento'),
       TextCellValue('Atividades'),
-      TextCellValue('Observações do Dia')
+      TextCellValue('Observações do Dia'),
     ]);
 
     for (var row in dados) {
       final dateRaw = DateTime.parse(row['reg_created_at']);
-      final dataString = "${dateRaw.day.toString().padLeft(2, '0')}/${dateRaw.month.toString().padLeft(2, '0')}/${dateRaw.year}";
+      final dataString =
+          "${dateRaw.day.toString().padLeft(2, '0')}/${dateRaw.month.toString().padLeft(2, '0')}/${dateRaw.year}";
 
       sheetObject.appendRow([
         TextCellValue(dataString),
@@ -233,10 +273,14 @@ class _ReportsPageState extends State<ReportsPage> {
 
     final fileBytes = excel.save();
     final directory = await getTemporaryDirectory();
-    final file = File('${directory.path}/relatorio_aluno_${widget.alunoId}.xlsx');
+    final file = File(
+      '${directory.path}/relatorio_aluno_${widget.alunoId}.xlsx',
+    );
     await file.writeAsBytes(fileBytes!);
 
-    await Share.shareXFiles([XFile(file.path)], text: 'Exportação de planilha concluída.');
+    await Share.shareXFiles([
+      XFile(file.path),
+    ], text: 'Exportação de planilha concluída.');
   }
 
   // Relatório em PDF
@@ -251,15 +295,29 @@ class _ReportsPageState extends State<ReportsPage> {
           return [
             pw.Header(
               level: 0,
-              child: pw.Text("Relatório de Acompanhamento - TEAgenda", style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+              child: pw.Text(
+                "Relatório de Acompanhamento - TEAgenda",
+                style: pw.TextStyle(
+                  fontSize: 20,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
             ),
             pw.SizedBox(height: 10),
-            pw.Text("Período analítico: ${_formatDate(_startDate)} até ${_formatDate(_endDate)}"),
+            pw.Text(
+              "Período analítico: ${_formatDate(_startDate)} até ${_formatDate(_endDate)}",
+            ),
             pw.SizedBox(height: 20),
 
             // Tabela o PDF
             pw.TableHelper.fromTextArray(
-              headers: ['Data', 'Humor', 'Alimentação', 'Comportamento', 'Atividades'],
+              headers: [
+                'Data',
+                'Humor',
+                'Alimentação',
+                'Comportamento',
+                'Atividades',
+              ],
               data: dados.map((item) {
                 final dateRaw = DateTime.parse(item['reg_created_at']);
                 return [
@@ -274,27 +332,36 @@ class _ReportsPageState extends State<ReportsPage> {
               cellAlignment: pw.Alignment.centerLeft,
             ),
             pw.SizedBox(height: 25),
-            pw.Text("Observações Descritivas:", style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+            pw.Text(
+              "Observações Descritivas:",
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
             pw.Divider(),
             for (var item in dados) ...[
-              if (item['reg_observacao'] != null && item['reg_observacao'].toString().isNotEmpty) ...[
+              if (item['reg_observacao'] != null &&
+                  item['reg_observacao'].toString().isNotEmpty) ...[
                 pw.Bullet(
-                  text: "Dia ${DateTime.parse(item['reg_created_at']).day}: ${item['reg_observacao']}",
+                  text:
+                      "Dia ${DateTime.parse(item['reg_created_at']).day}: ${item['reg_observacao']}",
                   style: const pw.TextStyle(fontSize: 11),
                 ),
                 pw.SizedBox(height: 4),
-              ]
-            ]
+              ],
+            ],
           ];
         },
       ),
     );
 
     final directory = await getTemporaryDirectory();
-    final file = File('${directory.path}/relatorio_aluno_${widget.alunoId}.pdf');
+    final file = File(
+      '${directory.path}/relatorio_aluno_${widget.alunoId}.pdf',
+    );
     await file.writeAsBytes(await pdf.save());
 
-    await Share.shareXFiles([XFile(file.path)], text: 'Exportação de arquivo PDF concluída.');
+    await Share.shareXFiles([
+      XFile(file.path),
+    ], text: 'Exportação de arquivo PDF concluída.');
   }
 
   void _selectStartDate(BuildContext context) async {
@@ -327,23 +394,35 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Color _corHumor(int humorId) {
     switch (humorId) {
-      case 1: return const Color(0xFFD40000);
-      case 2: return const Color(0xFFD87A00);
-      case 3: return const Color(0xFFFFD900);
-      case 4: return const Color(0xFF32AF00);
-      case 5: return const Color(0xFF7B02DF);
-      default: return Colors.grey;
+      case 1:
+        return const Color(0xFFD40000);
+      case 2:
+        return const Color(0xFFD87A00);
+      case 3:
+        return const Color(0xFFFFD900);
+      case 4:
+        return const Color(0xFF32AF00);
+      case 5:
+        return const Color(0xFF7B02DF);
+      default:
+        return Colors.grey;
     }
   }
 
   String _textoHumor(dynamic humorId) {
     switch (humorId) {
-      case 1: return "Muito Ruim";
-      case 2: return "Ruim";
-      case 3: return "Neutro";
-      case 4: return "Bom";
-      case 5: return "Muito Bom";
-      default: return "Não Informado";
+      case 1:
+        return "Muito Ruim";
+      case 2:
+        return "Ruim";
+      case 3:
+        return "Neutro";
+      case 4:
+        return "Bom";
+      case 5:
+        return "Muito Bom";
+      default:
+        return "Não Informado";
     }
   }
 }
