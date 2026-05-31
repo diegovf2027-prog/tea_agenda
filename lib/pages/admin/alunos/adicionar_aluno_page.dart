@@ -108,7 +108,7 @@ class _AdicionarAlunoPageState extends State<AdicionarAlunoPage> {
 
   Future<void> _salvarAluno() async {
     if (_formKey.currentState!.validate() && _dataNascimento != null) {
-      final cpfLimpo = _nomeController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      final cpfLimpo = _cpfController.text.replaceAll(RegExp(r'[^0-9]'), '');
 
       final dados = {
         'alu_nome': _nomeController.text.trim(),
