@@ -6,7 +6,6 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
-import 'package:share_plus/share_plus.dart';
 
 class ReportsPage extends StatefulWidget {
   final int alunoId;
@@ -27,6 +26,14 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final todosSelecionados = [
+      1,
+      2,
+      3,
+      4,
+      5,
+    ].every((humor) => _humorSelecionado.contains(humor));
+
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -73,16 +80,20 @@ class _ReportsPageState extends State<ReportsPage> {
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
                 TextButton(
-                  onPressed: () => setState(() => _humorSelecionado.clear()),
+                  onPressed: () {
+                    setState(() {
+                      _humorSelecionado
+                        ..clear()
+                        ..addAll([1, 2, 3, 4, 5]);
+                    });
+                  },
                   child: Text(
                     "Todos",
                     style: TextStyle(
-                      fontWeight: _humorSelecionado.isEmpty
+                      fontWeight: todosSelecionados
                           ? FontWeight.bold
                           : FontWeight.normal,
-                      color: _humorSelecionado.isEmpty
-                          ? Colors.blue
-                          : Colors.grey,
+                      color: todosSelecionados ? Colors.blue : Colors.grey,
                     ),
                   ),
                 ),
@@ -209,6 +220,17 @@ class _ReportsPageState extends State<ReportsPage> {
       final finalQuery = query.order('reg_created_at', ascending: true);
 
       final List<Map<String, dynamic>> dados = await finalQuery;
+      final comportamentosPorRegistro =
+          await _carregarComportamentosPorRegistro();
+
+      for (final registro in dados) {
+        final regId = registro['reg_id'] as int;
+        final lista = comportamentosPorRegistro[regId] ?? [];
+        registro['comportamentos'] = lista;
+        if (lista.isNotEmpty) {
+          registro['comportamento'] = {'com_status': lista.join(', ')};
+        }
+      }
 
       if (dados.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -392,6 +414,8 @@ class _ReportsPageState extends State<ReportsPage> {
     Sheet sheetObject = excel['Relatorio_TEA'];
     excel.delete('Sheet1');
 
+    final agrupado = _agruparPorData(dados);
+
     sheetObject.appendRow([
       TextCellValue('Relatório de Acompanhamento - TEAgenda'),
     ]);
@@ -401,22 +425,43 @@ class _ReportsPageState extends State<ReportsPage> {
       TextCellValue('Humor (Nível)'),
       TextCellValue('Alimentação'),
       TextCellValue('Comportamento'),
-      TextCellValue('Atividades'),
+      TextCellValue('Rotina'),
       TextCellValue('Observações do Dia'),
+      TextCellValue('Quantidade de Registros'),
     ]);
 
-    for (var row in dados) {
-      final dateRaw = DateTime.parse(row['reg_created_at']);
-      final dataString =
-          "${dateRaw.day.toString().padLeft(2, '0')}/${dateRaw.month.toString().padLeft(2, '0')}/${dateRaw.year}";
+    for (var entry in agrupado.entries) {
+      final registros = entry.value;
+      final dataKey = entry.key;
+
+      // Consolida múltiplos registros
+      final humores = registros
+          .map((r) => _textoHumor(r['reg_humor']))
+          .toSet()
+          .join(' / ');
+      final alimentacoes = registros
+          .map((r) => r['alimentacao']?['ali_status'] ?? 'Não informado')
+          .toSet()
+          .join(' / ');
+      final comportamentos = _coletarComportamentosDoDia(registros).join(' / ');
+      final atividades = registros
+          .map((r) => r['atividades']?['ati_status'] ?? 'Não informado')
+          .toSet()
+          .join(' / ');
+      final observacoes = registros
+          .where((r) => r['reg_observacao'] != null)
+          .map((r) => r['reg_observacao'].toString())
+          .toSet()
+          .join(' | ');
 
       sheetObject.appendRow([
-        TextCellValue(dataString),
-        TextCellValue(_textoHumor(row['reg_humor'])),
-        TextCellValue(row['alimentacao']?['ali_status'] ?? 'Não informado'),
-        TextCellValue(row['comportamento']?['com_status'] ?? 'Não informado'),
-        TextCellValue(row['atividades']?['ati_status'] ?? 'Não informado'),
-        TextCellValue(row['reg_observacao'] ?? ''),
+        TextCellValue(dataKey),
+        TextCellValue(humores),
+        TextCellValue(alimentacoes),
+        TextCellValue(comportamentos),
+        TextCellValue(atividades),
+        TextCellValue(observacoes.isEmpty ? 'Nenhuma' : observacoes),
+        TextCellValue(registros.length.toString()),
       ]);
     }
 
@@ -431,19 +476,34 @@ class _ReportsPageState extends State<ReportsPage> {
     return file;
   }
 
+  // Agrupa registros por data
+  Map<String, List<Map<String, dynamic>>> _agruparPorData(
+    List<Map<String, dynamic>> dados,
+  ) {
+    final agrupado = <String, List<Map<String, dynamic>>>{};
+    for (var registro in dados) {
+      final dateRaw = DateTime.parse(registro['reg_created_at']);
+      final dataKey =
+          "${dateRaw.day.toString().padLeft(2, '0')}/${dateRaw.month.toString().padLeft(2, '0')}/${dateRaw.year}";
+      agrupado.putIfAbsent(dataKey, () => []).add(registro);
+    }
+    return agrupado;
+  }
+
   // Relatório em PDF
   Future<File> _gerarPDF(
     List<Map<String, dynamic>> dados, {
     bool saveInDocuments = false,
   }) async {
     final pdf = pw.Document();
+    final agrupado = _agruparPorData(dados);
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(32),
         build: (pw.Context context) {
-          return [
+          final widgets = <pw.Widget>[
             pw.Header(
               level: 0,
               child: pw.Text(
@@ -459,47 +519,102 @@ class _ReportsPageState extends State<ReportsPage> {
               "Período analítico: ${_formatDate(_startDate)} até ${_formatDate(_endDate)}",
             ),
             pw.SizedBox(height: 20),
-
-            // Tabela o PDF
-            pw.TableHelper.fromTextArray(
-              headers: [
-                'Data',
-                'Humor',
-                'Alimentação',
-                'Comportamento',
-                'Atividades',
-              ],
-              data: dados.map((item) {
-                final dateRaw = DateTime.parse(item['reg_created_at']);
-                return [
-                  "${dateRaw.day}/${dateRaw.month}/${dateRaw.year}",
-                  _textoHumor(item['reg_humor']),
-                  item['alimentacao']?['ali_status'] ?? 'N/A',
-                  item['comportamento']?['com_status'] ?? 'N/A',
-                  item['atividades']?['ati_status'] ?? 'N/A',
-                ];
-              }).toList(),
-              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              cellAlignment: pw.Alignment.centerLeft,
-            ),
-            pw.SizedBox(height: 25),
-            pw.Text(
-              "Observações Descritivas:",
-              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.Divider(),
-            for (var item in dados) ...[
-              if (item['reg_observacao'] != null &&
-                  item['reg_observacao'].toString().isNotEmpty) ...[
-                pw.Bullet(
-                  text:
-                      "Dia ${DateTime.parse(item['reg_created_at']).day}: ${item['reg_observacao']}",
-                  style: const pw.TextStyle(fontSize: 11),
-                ),
-                pw.SizedBox(height: 4),
-              ],
-            ],
           ];
+
+          // Para cada dia, adiciona a tabela com dados do dia + observações
+          for (var entry in agrupado.entries) {
+            final registros = entry.value;
+            final dataKey = entry.key;
+
+            // Consolida múltiplos registros
+            final humores = registros
+                .map((r) => _textoHumor(r['reg_humor']))
+                .toSet()
+                .join(' / ');
+            final alimentacoes = registros
+                .map((r) => r['alimentacao']?['ali_status'] ?? 'N/A')
+                .toSet()
+                .join(' / ');
+            final comportamentos = _coletarComportamentosDoDia(
+              registros,
+            ).join(' / ');
+            final atividades = registros
+                .map((r) => r['atividades']?['ati_status'] ?? 'N/A')
+                .toSet()
+                .join(' / ');
+
+            // Adiciona tabela para o dia
+            widgets.add(
+              pw.Text(
+                "Dia $dataKey",
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+            );
+            widgets.add(pw.SizedBox(height: 8));
+
+            widgets.add(
+              pw.TableHelper.fromTextArray(
+                headers: ['Humor', 'Alimentação', 'Comportamento', 'Rotina'],
+                data: [
+                  [humores, alimentacoes, comportamentos, atividades],
+                ],
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                cellAlignment: pw.Alignment.centerLeft,
+              ),
+            );
+
+            widgets.add(pw.SizedBox(height: 12));
+
+            // Adiciona observações do dia (removendo duplicatas)
+            final observacoesUnicas = registros
+                .where(
+                  (r) =>
+                      r['reg_observacao'] != null &&
+                      r['reg_observacao'].toString().isNotEmpty,
+                )
+                .map((r) => r['reg_observacao'].toString())
+                .toSet()
+                .toList();
+
+            if (observacoesUnicas.isNotEmpty) {
+              widgets.add(
+                pw.Text(
+                  "Observações:",
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              );
+
+              for (int i = 0; i < observacoesUnicas.length; i++) {
+                widgets.add(
+                  pw.Bullet(
+                    text: "Observação ${i + 1}: ${observacoesUnicas[i]}",
+                    style: const pw.TextStyle(fontSize: 11),
+                  ),
+                );
+              }
+            } else {
+              widgets.add(
+                pw.Text(
+                  "Observações: Nenhuma",
+                  style: const pw.TextStyle(
+                    fontSize: 11,
+                    color: PdfColors.grey,
+                  ),
+                ),
+              );
+            }
+
+            widgets.add(pw.Divider());
+            widgets.add(pw.SizedBox(height: 16));
+          }
+
+          return widgets;
         },
       ),
     );
@@ -514,65 +629,41 @@ class _ReportsPageState extends State<ReportsPage> {
     return file;
   }
 
-  Future<void> _previewPdfReport() async {
-    setState(() => _gerando = true);
-    try {
-      final dados = await _fetchReportData();
-      if (dados.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Nenhum registro encontrado no período selecionado.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
+  Future<Map<int, List<String>>> _carregarComportamentosPorRegistro() async {
+    final tabelas = [
+      'registro_comportamento',
+      'reg_comportamento',
+      'registros_comportamentos',
+      'registro_comportamentos',
+    ];
 
-      final file = await _gerarPDF(dados);
-      await OpenFilex.open(file.path);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao visualizar o PDF: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() => _gerando = false);
+    final resultado = <int, List<String>>{};
+
+    for (final tabela in tabelas) {
+      try {
+        final associados = await supabase
+            .from(tabela)
+            .select('reg_id, com_id, comportamento:com_id(com_status)');
+
+        for (final item in associados) {
+          final regId = item['reg_id'] as int;
+          final nome = item['comportamento']?['com_status'];
+          if (nome == null) continue;
+
+          resultado.putIfAbsent(regId, () => []);
+          final lista = resultado[regId]!;
+          if (!lista.contains(nome.toString())) {
+            lista.add(nome.toString());
+          }
+        }
+
+        if (resultado.isNotEmpty) {
+          return resultado;
+        }
+      } catch (_) {}
     }
-  }
 
-  Future<void> _downloadPdfReport() async {
-    setState(() => _gerando = true);
-    try {
-      final dados = await _fetchReportData();
-      if (dados.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Nenhum registro encontrado no período selecionado.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
-
-      final file = await _gerarPDF(dados, saveInDocuments: true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF salvo em: ${file.path}'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao salvar o PDF: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() => _gerando = false);
-    }
+    return resultado;
   }
 
   Future<List<Map<String, dynamic>>> _fetchReportData() async {
@@ -602,7 +693,20 @@ class _ReportsPageState extends State<ReportsPage> {
     }
 
     final finalQuery = query.order('reg_created_at', ascending: true);
-    return List<Map<String, dynamic>>.from(await finalQuery);
+    final dados = List<Map<String, dynamic>>.from(await finalQuery);
+    final comportamentosPorRegistro =
+        await _carregarComportamentosPorRegistro();
+
+    for (final registro in dados) {
+      final regId = registro['reg_id'] as int;
+      final lista = comportamentosPorRegistro[regId] ?? [];
+      registro['comportamentos'] = lista;
+      if (lista.isNotEmpty) {
+        registro['comportamento'] = {'com_status': lista.join(', ')};
+      }
+    }
+
+    return dados;
   }
 
   void _selectStartDate(BuildContext context) async {
@@ -633,18 +737,67 @@ class _ReportsPageState extends State<ReportsPage> {
     return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
   }
 
+  List<String> _coletarComportamentosDoDia(
+    List<Map<String, dynamic>> registros,
+  ) {
+    final itens = <String>{};
+
+    for (final registro in registros) {
+      final valores = registro['comportamentos'] ?? registro['comportamento'];
+      final lista = _normalizarListaComportamentos(valores);
+      for (final item in lista) {
+        if (item.isNotEmpty) {
+          itens.add(item);
+        }
+      }
+    }
+
+    return itens.toList();
+  }
+
+  List<String> _normalizarListaComportamentos(dynamic valor) {
+    if (valor == null) return const [];
+
+    if (valor is List) {
+      return valor
+          .map((item) {
+            if (item is Map) {
+              return (item['com_status'] ?? item['status'] ?? '').toString();
+            }
+            return item.toString();
+          })
+          .where((item) => item.trim().isNotEmpty)
+          .toList();
+    }
+
+    if (valor is Map) {
+      final status = valor['com_status'] ?? valor['status'];
+      return status == null || status.toString().trim().isEmpty
+          ? const []
+          : [status.toString()];
+    }
+
+    final texto = valor.toString();
+    return texto.trim().isEmpty ? const [] : [texto];
+  }
+
+  String _formatComportamentos(dynamic comportamento) {
+    final lista = _normalizarListaComportamentos(comportamento);
+    return lista.isEmpty ? 'Não informado' : lista.join(', ');
+  }
+
   Color _corHumor(int humorId) {
     switch (humorId) {
       case 1:
-        return const Color(0xFFD40000);
+        return const Color(0xFFE00000);
       case 2:
-        return const Color(0xFFD87A00);
+        return const Color(0xFFE87500);
       case 3:
-        return const Color(0xFFFFD900);
+        return const Color(0xFFE5D500);
       case 4:
-        return const Color(0xFF32AF00);
+        return const Color(0xFF82D900);
       case 5:
-        return const Color(0xFF7B02DF);
+        return const Color(0xFF00C82B);
       default:
         return Colors.grey;
     }
@@ -653,15 +806,15 @@ class _ReportsPageState extends State<ReportsPage> {
   String _textoHumor(dynamic humorId) {
     switch (humorId) {
       case 1:
-        return "Muito Ruim";
+        return "Precisa de apoio";
       case 2:
-        return "Ruim";
+        return "Em adaptação";
       case 3:
-        return "Neutro";
+        return "Regular";
       case 4:
-        return "Bom";
+        return "Bem";
       case 5:
-        return "Muito Bom";
+        return "Muito bem";
       default:
         return "Não Informado";
     }

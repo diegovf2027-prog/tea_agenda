@@ -26,7 +26,7 @@ class _AddPageState extends State<AddPage> {
   bool _alunoFaltou = false;
   int? _idAlimentacao;
   int? _idAtividade;
-  int? _idComportamento;
+  List<int> _comportamentosSelecionados = [];
   int _idHumor = 3;
 
   List<Map<String, dynamic>> _opcaoAlimentacao = [];
@@ -48,9 +48,12 @@ class _AddPageState extends State<AddPage> {
       _observationController.text = reg['reg_observacao'] ?? '';
       _idAlimentacao = reg['reg_alimentacao'];
       _idAtividade = reg['reg_atividade'];
-      _idComportamento = reg['reg_comportamento'];
+      _comportamentosSelecionados = _parseComportamentos(
+        reg['reg_comportamento'],
+      );
       _idHumor = reg['reg_humor'] ?? 3;
       _alunoFaltou = reg['reg_falta'] ?? false;
+      _carregarComportamentosRelacionados();
     }
     _carregarDados();
   }
@@ -92,7 +95,7 @@ class _AddPageState extends State<AddPage> {
     if (!_alunoFaltou) {
       if (_idAlimentacao == null ||
           _idAtividade == null ||
-          _idComportamento == null) {
+          _comportamentosSelecionados.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -105,46 +108,84 @@ class _AddPageState extends State<AddPage> {
       }
     }
 
+    final comportamentoPrimario = _comportamentosSelecionados.isNotEmpty
+        ? _comportamentosSelecionados.first
+        : null;
+
     final registroDados = {
       'reg_aluno': widget.alunoId,
       'reg_falta': _alunoFaltou,
       'reg_alimentacao': _alunoFaltou ? null : _idAlimentacao,
       'reg_atividade': _alunoFaltou ? null : _idAtividade,
-      'reg_comportamento': _alunoFaltou ? null : _idComportamento,
+      'reg_comportamento': _alunoFaltou ? null : comportamentoPrimario,
       'reg_humor': _alunoFaltou ? null : _idHumor,
-      'reg_observacao': _alunoFaltou ? 'ALUNO FALTOU' : _observationController.text.trim(),
+      'reg_observacao': _alunoFaltou
+          ? 'Aluno Faltou.'
+          : _observationController.text.trim(),
       if (widget.registroDia == null && widget.dataSelecionada != null)
         'reg_created_at': widget.dataSelecionada!.toUtc().toIso8601String(),
     };
 
     try {
+      int registroId;
+
       if (widget.registroDia != null) {
+        // Modo edição: atualizar registro existente
+        registroId = widget.registroDia!['reg_id'];
         await supabase
             .from('registros')
             .update(registroDados)
-            .eq('reg_id', widget.registroDia!['reg_id']);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registro atualizado com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.of(context).pop();
-        }
+            .eq('reg_id', registroId);
       } else {
-        await supabase.from('registros').insert(registroDados);
+        // Modo novo registro: verificar se já existe registro do mesmo aluno no mesmo dia
+        final dataVerificacao = widget.dataSelecionada ?? DateTime.now();
+        final inicioDodia = DateTime(
+          dataVerificacao.year,
+          dataVerificacao.month,
+          dataVerificacao.day,
+        ).toUtc();
+        final fimDodia = inicioDodia.add(const Duration(days: 1));
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registro salvo com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+        final registrosExistentes = await supabase
+            .from('registros')
+            .select('reg_id')
+            .eq('reg_aluno', widget.alunoId)
+            .gte('reg_created_at', inicioDodia.toIso8601String())
+            .lt('reg_created_at', fimDodia.toIso8601String());
+
+        if (registrosExistentes.isNotEmpty) {
+          // Já existe registro neste dia: fazer UPDATE
+          registroId = registrosExistentes[0]['reg_id'] as int;
+          await supabase
+              .from('registros')
+              .update(registroDados)
+              .eq('reg_id', registroId);
+        } else {
+          // Nenhum registro neste dia: fazer INSERT
+          final response = await supabase
+              .from('registros')
+              .insert(registroDados)
+              .select('reg_id');
+
+          registroId = (response as List).first['reg_id'] as int;
         }
+      }
+
+      await _salvarComportamentosRelacionados(registroId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registro salvo com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      if (widget.registroDia == null) {
         _resetForm();
+      } else if (mounted) {
+        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
@@ -158,12 +199,92 @@ class _AddPageState extends State<AddPage> {
     }
   }
 
+  Future<void> _carregarComportamentosRelacionados() async {
+    if (widget.registroDia == null) return;
+
+    try {
+      final tabela = await _resolverTabelaComportamento();
+      final response = await supabase
+          .from(tabela)
+          .select('com_id')
+          .eq('reg_id', widget.registroDia!['reg_id']);
+
+      final selecionados = (response as List)
+          .map((item) => int.tryParse(item['com_id'].toString()))
+          .whereType<int>()
+          .toList();
+
+      if (mounted) {
+        setState(() => _comportamentosSelecionados = selecionados);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _comportamentosSelecionados = _parseComportamentos(
+            widget.registroDia!['reg_comportamento'],
+          ),
+        );
+      }
+    }
+  }
+
+  Future<String> _resolverTabelaComportamento() async {
+    final tabelas = [
+      'registro_comportamento',
+      'reg_comportamento',
+      'registros_comportamentos',
+      'registro_comportamentos',
+    ];
+
+    for (final tabela in tabelas) {
+      try {
+        await supabase.from(tabela).select('reg_id').limit(1);
+        return tabela;
+      } catch (_) {}
+    }
+
+    return 'registro_comportamento';
+  }
+
+  Future<void> _salvarComportamentosRelacionados(int registroId) async {
+    final tabela = await _resolverTabelaComportamento();
+
+    await supabase.from(tabela).delete().eq('reg_id', registroId);
+
+    if (_comportamentosSelecionados.isEmpty) return;
+
+    final payload = _comportamentosSelecionados
+        .map((comId) => {'reg_id': registroId, 'com_id': comId})
+        .toList();
+
+    await supabase.from(tabela).insert(payload);
+  }
+
+  List<int> _parseComportamentos(dynamic valor) {
+    if (valor == null) return [];
+    if (valor is List) {
+      return valor
+          .map((item) => int.tryParse(item.toString()))
+          .whereType<int>()
+          .toList();
+    }
+    if (valor is int) return [valor];
+    if (valor is String) {
+      return valor
+          .split(',')
+          .map((item) => int.tryParse(item.trim()))
+          .whereType<int>()
+          .toList();
+    }
+    return [];
+  }
+
   void _resetForm() {
     setState(() {
       _alunoFaltou = false;
       _idAlimentacao = null;
       _idAtividade = null;
-      _idComportamento = null;
+      _comportamentosSelecionados = [];
       _idHumor = 3;
       _imagemSelecionada = null;
       _observationController.clear();
@@ -173,15 +294,15 @@ class _AddPageState extends State<AddPage> {
   Color _corHumor(int humorId) {
     switch (humorId) {
       case 1:
-        return const Color(0xFFD40000);
+        return const Color(0xFFE00000);
       case 2:
-        return const Color(0xFFD87A00);
+        return const Color(0xFFE87500);
       case 3:
-        return const Color(0xFFFFD900);
+        return const Color(0xFFE5D500);
       case 4:
-        return const Color(0xFF32AF00);
+        return const Color(0xFF82D900);
       case 5:
-        return const Color(0xFF7B02DF);
+        return const Color(0xFF00C82B);
       default:
         return Colors.grey;
     }
@@ -234,10 +355,14 @@ class _AddPageState extends State<AddPage> {
 
               Container(
                 decoration: BoxDecoration(
-                  color: _alunoFaltou ? Colors.red.shade50 : Colors.grey.shade100,
+                  color: _alunoFaltou
+                      ? Colors.red.shade50
+                      : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: _alunoFaltou ? Colors.red.shade300 : Colors.grey.shade300,
+                    color: _alunoFaltou
+                        ? Colors.red.shade300
+                        : Colors.grey.shade300,
                   ),
                 ),
                 child: CheckboxListTile(
@@ -245,10 +370,14 @@ class _AddPageState extends State<AddPage> {
                     'Aluno faltou neste dia',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _alunoFaltou ? Colors.red.shade900 : Colors.black87,
+                      color: _alunoFaltou
+                          ? Colors.red.shade900
+                          : Colors.black87,
                     ),
                   ),
-                  subtitle: const Text('Marque para registrar ausência do aluno.'),
+                  subtitle: const Text(
+                    'Marque para registrar ausência do aluno.',
+                  ),
                   value: _alunoFaltou,
                   activeColor: Colors.red,
                   onChanged: (bool? val) {
@@ -277,7 +406,7 @@ class _AddPageState extends State<AddPage> {
                         'nome',
                       ),
 
-                      _buildLabel("Atividades"),
+                      _buildLabel("Rotina"),
                       _buildDropdown(
                         _opcaoAtividades,
                         _idAtividade,
@@ -287,17 +416,21 @@ class _AddPageState extends State<AddPage> {
                       ),
 
                       _buildLabel("Comportamento"),
-                      _buildDropdown(
+                      _buildCheckGroup(
                         _opcaoComportamento,
-                        _idComportamento,
-                        (val) => setState(() => _idComportamento = val),
+                        _comportamentosSelecionados,
+                        (val) =>
+                            setState(() => _comportamentosSelecionados = val),
                         'com_id',
                         'nome',
                       ),
                       const SizedBox(height: 24),
                       const Text(
                         'Observações',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -314,7 +447,10 @@ class _AddPageState extends State<AddPage> {
                       const SizedBox(height: 16),
                       const Text(
                         'Foto do Registro',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       IconButton(
                         onPressed: _pickImage,
@@ -330,7 +466,10 @@ class _AddPageState extends State<AddPage> {
                       const SizedBox(height: 24),
                       const Text(
                         'Humor do Dia',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 16),
 
@@ -407,19 +546,80 @@ class _AddPageState extends State<AddPage> {
       decoration: InputDecoration(
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
-      items: opcoes.map((opt) {
-        final id =
-            opt[idKey] ?? opt['id'] ?? opt.values.firstWhere((v) => v is int);
-        final nome =
-            opt[textKey] ??
-            opt['nome'] ??
-            opt.values.firstWhere((v) => v is String);
-        return DropdownMenuItem<int>(
-          value: id as int,
-          child: Text(nome.toString()),
-        );
-      }).toList(),
-      onChanged: _alunoFaltou ? null : onChanged,
+      items: [
+        const DropdownMenuItem<int>(value: -1, child: Text('Selecione...')),
+        ...opcoes.map((opt) {
+          final id =
+              opt[idKey] ?? opt['id'] ?? opt.values.firstWhere((v) => v is int);
+          final nome =
+              opt[textKey] ??
+              opt['nome'] ??
+              opt.values.firstWhere((v) => v is String);
+          return DropdownMenuItem<int>(
+            value: id as int,
+            child: Text(nome.toString()),
+          );
+        }),
+      ],
+      onChanged: _alunoFaltou
+          ? null
+          : (value) {
+              if (value == -1) {
+                onChanged(null);
+                return;
+              }
+              onChanged(value);
+            },
+    );
+  }
+
+  Widget _buildCheckGroup(
+    List<Map<String, dynamic>> opcoes,
+    List<int> valoresSelecionados,
+    Function(List<int>) onChanged,
+    String idKey,
+    String textKey,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: opcoes.map((opt) {
+          final id =
+              opt[idKey] ?? opt['id'] ?? opt.values.firstWhere((v) => v is int);
+          final nome =
+              opt[textKey] ??
+              opt['nome'] ??
+              opt.values.firstWhere((v) => v is String);
+          final idInt = id as int;
+          final selecionado = valoresSelecionados.contains(idInt);
+
+          return CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            value: selecionado,
+            activeColor: Colors.blue,
+            title: Text(nome.toString()),
+            onChanged: _alunoFaltou
+                ? null
+                : (bool? checked) {
+                    final lista = List<int>.from(valoresSelecionados);
+
+                    if (checked == true && !lista.contains(idInt)) {
+                      lista.add(idInt);
+                    } else if (checked == false && lista.contains(idInt)) {
+                      lista.remove(idInt);
+                    }
+
+                    onChanged(lista);
+                  },
+          );
+        }).toList(),
+      ),
     );
   }
 }

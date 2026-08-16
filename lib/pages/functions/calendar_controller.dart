@@ -7,7 +7,7 @@ class CalendarController extends GetxController {
   final int alunoId;
 
   CalendarController({required this.alunoId});
-  
+
   late DateTime firstDay;
   late DateTime lastDay;
   DateTime focusedDay = DateTime.now();
@@ -30,18 +30,52 @@ class CalendarController extends GetxController {
     try {
       carregando = true;
       update(['calendario', 'agenda']);
-      final data = await supabase.from('registros').select('''
+      final data = await supabase
+          .from('registros')
+          .select('''
         *,
         alimentacao:reg_alimentacao(ali_status),
-        comportamento:reg_comportamento(com_status),
         atividades:reg_atividade(ati_status)
-      ''').eq('reg_aluno', alunoId);
+      ''')
+          .eq('reg_aluno', alunoId);
+
+      final tabelas = [
+        'registro_comportamento',
+        'reg_comportamento',
+        'registros_comportamentos',
+        'registro_comportamentos',
+      ];
+
+      Map<int, List<String>> comportamentosPorRegistro = {};
+      for (final tabela in tabelas) {
+        try {
+          final associados = await supabase
+              .from(tabela)
+              .select('reg_id, com_id, comportamento:com_id(com_status)');
+
+          for (final item in associados) {
+            final regId = item['reg_id'] as int;
+            final nome = item['comportamento']?['com_status'];
+            if (nome != null) {
+              comportamentosPorRegistro.putIfAbsent(regId, () => []);
+              comportamentosPorRegistro[regId]!.add(nome.toString());
+            }
+          }
+          break;
+        } catch (_) {}
+      }
 
       _recordsByDate.clear();
       selectedRecord = null;
 
       for (var reg in data) {
         final date = DateTime.parse(reg['reg_created_at']);
+        final regId = reg['reg_id'] as int;
+        final listaComportamentos = comportamentosPorRegistro[regId] ?? [];
+        reg['comportamentos'] = listaComportamentos;
+        reg['comportamento'] = listaComportamentos.isNotEmpty
+            ? {'com_status': listaComportamentos.join(', ')}
+            : null;
         _recordsByDate[DateTime(date.year, date.month, date.day)] = reg;
       }
 
@@ -57,26 +91,33 @@ class CalendarController extends GetxController {
   void onDaySelected(DateTime selected, DateTime focused) {
     selectedDay = selected;
     focusedDay = focused;
-    selectedRecord = _recordsByDate[DateTime(selected.year, selected.month, selected.day)];
+    selectedRecord =
+        _recordsByDate[DateTime(selected.year, selected.month, selected.day)];
     update(['calendario', 'agenda']);
   }
 
   Color getHumorColor(DateTime date) {
-  final day = DateTime(date.year, date.month, date.day);
-  final reg = _recordsByDate[day];
-  if (reg == null) return Colors.transparent;
+    final day = DateTime(date.year, date.month, date.day);
+    final reg = _recordsByDate[day];
+    if (reg == null) return Colors.transparent;
 
-  if (reg['reg_falta'] == true) {
-    return Colors.grey.shade600;
-  }
+    if (reg['reg_falta'] == true) {
+      return Colors.grey.shade600;
+    }
 
-  switch (reg['reg_humor']) {
-    case 1: return const Color(0xFFD40000); // Muito Ruim
-    case 2: return const Color(0xFFD87A00); // Ruim
-    case 3: return const Color(0xFFFFD900); // Neutro
-    case 4: return const Color(0xFF32AF00); // Bom
-    case 5: return const Color(0xFF7B02DF); // Muito Bom
-    default: return Colors.transparent;
+    switch (reg['reg_humor']) {
+      case 1:
+        return const Color(0xFFE00000);
+      case 2:
+        return const Color(0xFFE87500);
+      case 3:
+        return const Color(0xFFE5D500);
+      case 4:
+        return const Color(0xFF82D900);
+      case 5:
+        return const Color(0xFF00C82B);
+      default:
+        return Colors.transparent;
+    }
   }
-}
 }

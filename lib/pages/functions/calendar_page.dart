@@ -29,102 +29,173 @@ class CalendarPage extends StatelessWidget {
           }
 
           return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TableCalendar(
-                  locale: 'pt-BR',
-                  firstDay: controller.firstDay,
-                  lastDay: controller.lastDay,
-                  focusedDay: controller.focusedDay,
-                  startingDayOfWeek: StartingDayOfWeek.monday,
-                  availableCalendarFormats: const {
-                    CalendarFormat.month: 'Mês',
-                    CalendarFormat.week: 'Semana',
-                  },
-                  headerStyle: const HeaderStyle(formatButtonVisible: false),
-
-                  selectedDayPredicate: (day) =>
-                      isSameDay(day, controller.selectedDay),
-
-                  onDaySelected: (selectedDay, focusedDay) {
-                    controller.onDaySelected(selectedDay, focusedDay);
-                  },
-
-                  calendarBuilders: CalendarBuilders(
-                    defaultBuilder: (context, day, focusedDay) {
-                      final color = controller.getHumorColor(day);
-                      return Container(
-                        margin: const EdgeInsets.all(4.0),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: color != Colors.transparent
-                              ? color.withOpacity(0.15)
-                              : null,
-                          shape: BoxShape.circle,
-                          border: color != Colors.transparent
-                              ? Border.all(color: color, width: 1.5)
-                              : null,
-                        ),
-                        child: Text(
-                          '${day.day}',
-                          style: TextStyle(
-                            fontWeight: color != Colors.transparent
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      );
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: const Color.fromARGB(255, 125, 126, 128),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color.fromARGB(
+                          255,
+                          226,
+                          228,
+                          229,
+                        ).withOpacity(0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: TableCalendar(
+                    locale: 'pt-BR',
+                    firstDay: controller.firstDay,
+                    lastDay: controller.lastDay,
+                    focusedDay: controller.focusedDay,
+                    startingDayOfWeek: StartingDayOfWeek.monday,
+                    availableCalendarFormats: const {
+                      CalendarFormat.month: 'Mês',
+                      CalendarFormat.week: 'Semana',
                     },
-
-                    todayBuilder: (context, day, focusedDay) {
-                      final color = controller.getHumorColor(day);
-                      return Container(
-                        margin: const EdgeInsets.all(4.0),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: color != Colors.transparent
-                              ? color.withOpacity(0.15)
-                              : Colors.blue.withOpacity(0.15),
-                          shape: BoxShape.circle,
-                          border: Border.all(
+                    headerStyle: HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
+                      titleTextStyle: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                      leftChevronIcon: Icon(
+                        Icons.chevron_left,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                      rightChevronIcon: Icon(
+                        Icons.chevron_right,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
+                    daysOfWeekStyle: DaysOfWeekStyle(
+                      weekdayStyle: TextStyle(
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                      weekendStyle: TextStyle(
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                    ),
+                    calendarStyle: CalendarStyle(
+                      outsideTextStyle: TextStyle(color: Colors.grey.shade400),
+                      defaultTextStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                      weekendTextStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                      todayDecoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.blue, width: 1.5),
+                      ),
+                      selectedDecoration: BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                      selectedTextStyle: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    selectedDayPredicate: (day) =>
+                        isSameDay(day, controller.selectedDay),
+                    onDaySelected: (selectedDay, focusedDay) {
+                      controller.onDaySelected(selectedDay, focusedDay);
+                    },
+                    calendarBuilders: CalendarBuilders(
+                      defaultBuilder: (context, day, focusedDay) {
+                        final color = controller.getHumorColor(day);
+                        return Container(
+                          margin: const EdgeInsets.all(4.0),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: color != Colors.transparent
+                                ? color.withOpacity(0.15)
+                                : Colors.grey.withOpacity(0.04),
+                            shape: BoxShape.circle,
+                            border: color != Colors.transparent
+                                ? Border.all(
+                                    color: color.withOpacity(0.7),
+                                    width: 1.2,
+                                  )
+                                : null,
+                          ),
+                          child: Text(
+                            '${day.day}',
+                            style: TextStyle(
+                              fontWeight: color != Colors.transparent
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        );
+                      },
+                      todayBuilder: (context, day, focusedDay) {
+                        final color = controller.getHumorColor(day);
+                        return Container(
+                          margin: const EdgeInsets.all(4.0),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: color != Colors.transparent
+                                ? color.withOpacity(0.18)
+                                : Colors.blue.withOpacity(0.15),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: color != Colors.transparent
+                                  ? color
+                                  : Colors.blue,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Text(
+                            '${day.day}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        );
+                      },
+                      selectedBuilder: (context, day, focusedDay) {
+                        final color = controller.getHumorColor(day);
+                        return Container(
+                          margin: const EdgeInsets.all(4.0),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
                             color: color != Colors.transparent
                                 ? color
                                 : Colors.blue,
-                            width: 1.5,
+                            shape: BoxShape.circle,
                           ),
-                        ),
-                        child: Text(
-                          '${day.day}',
-                          style: TextStyle(
-                            fontWeight: color != Colors.transparent
-                                ? FontWeight.bold
-                                : FontWeight.normal,
+                          child: Text(
+                            '${day.day}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      );
-                    },
-
-                    selectedBuilder: (context, day, focusedDay) {
-                      final color = controller.getHumorColor(day);
-                      return Container(
-                        margin: const EdgeInsets.all(4.0),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: color != Colors.transparent
-                              ? color
-                              : Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '${day.day}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -259,9 +330,9 @@ class CalendarPage extends StatelessWidget {
     final String alimentacaoStatus = record['alimentacao'] != null
         ? record['alimentacao']['ali_status'] ?? 'Não informado'
         : 'Não informado';
-    final String comportamentoStatus = record['comportamento'] != null
-        ? record['comportamento']['com_status'] ?? 'Não informado'
-        : 'Não informado';
+    final String comportamentoStatus = _formatComportamento(
+      record['comportamentos'] ?? record['comportamento'],
+    );
     final String atividadeStatus = record['atividades'] != null
         ? record['atividades']['ati_status'] ?? 'Não informado'
         : 'Não informado';
@@ -295,7 +366,7 @@ class CalendarPage extends StatelessWidget {
           ),
 
           _buildRecordCard(
-            title: "Atividades",
+            title: "Rotina",
             content: atividadeStatus,
             icon: Icons.extension,
             iconColor: Colors.blue,
@@ -337,6 +408,27 @@ class CalendarPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatComportamento(dynamic comportamento) {
+    if (comportamento == null) return 'Não informado';
+
+    if (comportamento is List) {
+      if (comportamento.isEmpty) return 'Não informado';
+      return comportamento
+          .map(
+            (item) => item is Map
+                ? (item['com_status'] ?? item.toString())
+                : item.toString(),
+          )
+          .join(', ');
+    }
+
+    if (comportamento is Map) {
+      return comportamento['com_status'] ?? 'Não informado';
+    }
+
+    return comportamento.toString();
   }
 
   Widget _buildRecordCard({
