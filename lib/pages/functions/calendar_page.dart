@@ -204,6 +204,58 @@ class CalendarPage extends StatelessWidget {
       );
     }
 
+    final bool alunoFaltou = record['reg_falta'] ?? false;
+
+    if (alunoFaltou) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: Column(
+          children: [
+            _buildRecordCard(
+              title: "Observação do Dia",
+              content: record['reg_observacao']?.toString().isNotEmpty == true
+                  ? record['reg_observacao'].toString()
+                  : "ALUNO FALTOU",
+              icon: Icons.notes,
+              iconColor: Colors.blue,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await Get.to(
+                    () => AddPage(
+                      alunoId: alunoId,
+                      registroDia: record,
+                      dataSelecionada: controller.selectedDay,
+                    ),
+                  );
+                  controller.fetchRecords();
+                },
+                icon: const Icon(Icons.edit, color: Colors.white),
+                label: const Text(
+                  'Editar Registro',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final String alimentacaoStatus = record['alimentacao'] != null
         ? record['alimentacao']['ali_status'] ?? 'Não informado'
         : 'Não informado';

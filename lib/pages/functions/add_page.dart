@@ -23,6 +23,7 @@ class _AddPageState extends State<AddPage> {
   final TextEditingController _observationController = TextEditingController();
   File? _imagemSelecionada;
 
+  bool _alunoFaltou = false;
   int? _idAlimentacao;
   int? _idAtividade;
   int? _idComportamento;
@@ -49,6 +50,7 @@ class _AddPageState extends State<AddPage> {
       _idAtividade = reg['reg_atividade'];
       _idComportamento = reg['reg_comportamento'];
       _idHumor = reg['reg_humor'] ?? 3;
+      _alunoFaltou = reg['reg_falta'] ?? false;
     }
     _carregarDados();
   }
@@ -71,6 +73,8 @@ class _AddPageState extends State<AddPage> {
   }
 
   Future<void> _pickImage() async {
+    if (_alunoFaltou) return;
+
     final picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(
       source: ImageSource.gallery,
@@ -85,30 +89,32 @@ class _AddPageState extends State<AddPage> {
   }
 
   Future<void> _salvarRegistro() async {
-    if (_idAlimentacao == null ||
-        _idAtividade == null ||
-        _idComportamento == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Preencha os campos de Alimentação, Atividade e Comportamento',
+    if (!_alunoFaltou) {
+      if (_idAlimentacao == null ||
+          _idAtividade == null ||
+          _idComportamento == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Preencha os campos de Alimentação, Atividade e Comportamento',
+            ),
+            backgroundColor: Colors.orange,
           ),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
+        );
+        return;
+      }
     }
 
     final registroDados = {
       'reg_aluno': widget.alunoId,
-      'reg_alimentacao': _idAlimentacao,
-      'reg_atividade': _idAtividade,
-      'reg_comportamento': _idComportamento,
-      'reg_humor': _idHumor,
-      'reg_observacao': _observationController.text.trim(),
-      // VERIFICAR COM O DIEGO
+      'reg_falta': _alunoFaltou,
+      'reg_alimentacao': _alunoFaltou ? null : _idAlimentacao,
+      'reg_atividade': _alunoFaltou ? null : _idAtividade,
+      'reg_comportamento': _alunoFaltou ? null : _idComportamento,
+      'reg_humor': _alunoFaltou ? null : _idHumor,
+      'reg_observacao': _alunoFaltou ? 'ALUNO FALTOU' : _observationController.text.trim(),
       if (widget.registroDia == null && widget.dataSelecionada != null)
-        'reg_created_at': widget.dataSelecionada!.toIso8601String(),
+        'reg_created_at': widget.dataSelecionada!.toUtc().toIso8601String(),
     };
 
     try {
@@ -118,37 +124,43 @@ class _AddPageState extends State<AddPage> {
             .update(registroDados)
             .eq('reg_id', widget.registroDia!['reg_id']);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registro atualizado com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        Navigator.of(context).pop();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registro atualizado com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.of(context).pop();
+        }
       } else {
         await supabase.from('registros').insert(registroDados);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registro salvo com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registro salvo com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
         _resetForm();
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao salvar: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao salvar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   void _resetForm() {
     setState(() {
+      _alunoFaltou = false;
       _idAlimentacao = null;
       _idAtividade = null;
       _idComportamento = null;
@@ -220,87 +232,127 @@ class _AddPageState extends State<AddPage> {
               ),
               const SizedBox(height: 16),
 
-              _buildLabel("Alimentação"),
-              _buildDropdown(
-                _opcaoAlimentacao,
-                _idAlimentacao,
-                (val) => setState(() => _idAlimentacao = val),
-                'ali_id',
-                'nome',
-              ),
-
-              _buildLabel("Atividades"),
-              _buildDropdown(
-                _opcaoAtividades,
-                _idAtividade,
-                (val) => setState(() => _idAtividade = val),
-                'ati_id',
-                'nome',
-              ),
-
-              _buildLabel("Comportamento"),
-              _buildDropdown(
-                _opcaoComportamento,
-                _idComportamento,
-                (val) => setState(() => _idComportamento = val),
-                'com_id',
-                'nome',
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Observações',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _observationController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Notas sobre o dia...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+              Container(
+                decoration: BoxDecoration(
+                  color: _alunoFaltou ? Colors.red.shade50 : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _alunoFaltou ? Colors.red.shade300 : Colors.grey.shade300,
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 16),
-              const Text(
-                'Foto do Registro',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-              IconButton(
-                onPressed: _pickImage,
-                icon: const Icon(
-                  Icons.add_a_photo,
-                  size: 40,
-                  color: Colors.blue,
+                child: CheckboxListTile(
+                  title: Text(
+                    'Aluno faltou neste dia',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _alunoFaltou ? Colors.red.shade900 : Colors.black87,
+                    ),
+                  ),
+                  subtitle: const Text('Marque para registrar ausência do aluno.'),
+                  value: _alunoFaltou,
+                  activeColor: Colors.red,
+                  onChanged: (bool? val) {
+                    setState(() {
+                      _alunoFaltou = val ?? false;
+                    });
+                  },
                 ),
               ),
-              if (_imagemSelecionada != null)
-                Image.file(_imagemSelecionada!, height: 150),
 
-              const SizedBox(height: 24),
-              const Text(
-                'Humor do Dia',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
               const SizedBox(height: 16),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  for (int i = 1; i <= 5; i++)
-                    GestureDetector(
-                      onTap: () => setState(() => _idHumor = i),
-                      child: Icon(
-                        Icons.face,
-                        size: 45,
-                        color: i <= _idHumor
-                            ? _corHumor(_idHumor)
-                            : Colors.grey[300],
+              Opacity(
+                opacity: _alunoFaltou ? 0.4 : 1.0,
+                child: AbsorbPointer(
+                  absorbing: _alunoFaltou,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLabel("Alimentação"),
+                      _buildDropdown(
+                        _opcaoAlimentacao,
+                        _idAlimentacao,
+                        (val) => setState(() => _idAlimentacao = val),
+                        'ali_id',
+                        'nome',
                       ),
-                    ),
-                ],
+
+                      _buildLabel("Atividades"),
+                      _buildDropdown(
+                        _opcaoAtividades,
+                        _idAtividade,
+                        (val) => setState(() => _idAtividade = val),
+                        'ati_id',
+                        'nome',
+                      ),
+
+                      _buildLabel("Comportamento"),
+                      _buildDropdown(
+                        _opcaoComportamento,
+                        _idComportamento,
+                        (val) => setState(() => _idComportamento = val),
+                        'com_id',
+                        'nome',
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Observações',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _observationController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          hintText: 'Notas sobre o dia...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Foto do Registro',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      IconButton(
+                        onPressed: _pickImage,
+                        icon: const Icon(
+                          Icons.add_a_photo,
+                          size: 40,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      if (_imagemSelecionada != null)
+                        Image.file(_imagemSelecionada!, height: 150),
+
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Humor do Dia',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          for (int i = 1; i <= 5; i++)
+                            GestureDetector(
+                              onTap: () => setState(() => _idHumor = i),
+                              child: Icon(
+                                Icons.face,
+                                size: 45,
+                                color: i <= _idHumor
+                                    ? _corHumor(_idHumor)
+                                    : Colors.grey[300],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
               const SizedBox(height: 40),
@@ -367,7 +419,7 @@ class _AddPageState extends State<AddPage> {
           child: Text(nome.toString()),
         );
       }).toList(),
-      onChanged: onChanged,
+      onChanged: _alunoFaltou ? null : onChanged,
     );
   }
 }

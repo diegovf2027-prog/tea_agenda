@@ -62,17 +62,21 @@ class CalendarController extends GetxController {
   }
 
   Color getHumorColor(DateTime date) {
-    final day = DateTime(date.year, date.month, date.day);
-    final reg = _recordsByDate[day];
-    if (reg == null) return Colors.transparent;
+  final day = DateTime(date.year, date.month, date.day);
+  final reg = _recordsByDate[day];
+  if (reg == null) return Colors.transparent;
 
-    switch (reg['reg_humor']) {
-      case 1: return const Color(0xFFD40000); // Muito Ruim
-      case 2: return const Color(0xFFD87A00); // Ruim
-      case 3: return const Color(0xFFFFD900); // Neutro
-      case 4: return const Color(0xFF32AF00); // Bom
-      case 5: return const Color(0xFF7B02DF); // Muito Bom
-      default: return Colors.transparent;
-    }
+  if (reg['reg_falta'] == true) {
+    return Colors.grey.shade600;
   }
+
+  switch (reg['reg_humor']) {
+    case 1: return const Color(0xFFD40000); // Muito Ruim
+    case 2: return const Color(0xFFD87A00); // Ruim
+    case 3: return const Color(0xFFFFD900); // Neutro
+    case 4: return const Color(0xFF32AF00); // Bom
+    case 5: return const Color(0xFF7B02DF); // Muito Bom
+    default: return Colors.transparent;
+  }
+}
 }
