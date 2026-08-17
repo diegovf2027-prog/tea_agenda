@@ -666,49 +666,6 @@ class _ReportsPageState extends State<ReportsPage> {
     return resultado;
   }
 
-  Future<List<Map<String, dynamic>>> _fetchReportData() async {
-    final dataFimFiltro = DateTime(
-      _endDate.year,
-      _endDate.month,
-      _endDate.day,
-      23,
-      59,
-      59,
-    );
-
-    var query = supabase
-        .from('registros')
-        .select('''
-      *,
-      alimentacao:reg_alimentacao(ali_status),
-      comportamento:reg_comportamento(com_status),
-      atividades:reg_atividade(ati_status)
-    ''')
-        .eq('reg_aluno', widget.alunoId)
-        .gte('reg_created_at', _startDate.toIso8601String())
-        .lte('reg_created_at', dataFimFiltro.toIso8601String());
-
-    if (_humorSelecionado.isNotEmpty) {
-      query = query.inFilter('reg_humor', _humorSelecionado);
-    }
-
-    final finalQuery = query.order('reg_created_at', ascending: true);
-    final dados = List<Map<String, dynamic>>.from(await finalQuery);
-    final comportamentosPorRegistro =
-        await _carregarComportamentosPorRegistro();
-
-    for (final registro in dados) {
-      final regId = registro['reg_id'] as int;
-      final lista = comportamentosPorRegistro[regId] ?? [];
-      registro['comportamentos'] = lista;
-      if (lista.isNotEmpty) {
-        registro['comportamento'] = {'com_status': lista.join(', ')};
-      }
-    }
-
-    return dados;
-  }
-
   void _selectStartDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -779,11 +736,6 @@ class _ReportsPageState extends State<ReportsPage> {
 
     final texto = valor.toString();
     return texto.trim().isEmpty ? const [] : [texto];
-  }
-
-  String _formatComportamentos(dynamic comportamento) {
-    final lista = _normalizarListaComportamentos(comportamento);
-    return lista.isEmpty ? 'Não informado' : lista.join(', ');
   }
 
   Color _corHumor(int humorId) {
