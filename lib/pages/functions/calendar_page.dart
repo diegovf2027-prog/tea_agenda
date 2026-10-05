@@ -283,6 +283,13 @@ class CalendarPage extends StatelessWidget {
         child: Column(
           children: [
             _buildRecordCard(
+              title: "Assinado por",
+              content:
+                  record['assinante_nome']?.toString() ?? 'Não identificado',
+              icon: Icons.draw,
+              iconColor: Colors.blueGrey,
+            ),
+            _buildRecordCard(
               title: "Observação do Dia",
               content: record['reg_observacao']?.toString().isNotEmpty == true
                   ? record['reg_observacao'].toString()
@@ -342,6 +349,12 @@ class CalendarPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         children: [
+          _buildRecordCard(
+            title: "Assinado por",
+            content: record['assinante_nome']?.toString() ?? 'Não identificado',
+            icon: Icons.draw,
+            iconColor: Colors.blueGrey,
+          ),
           if (record['reg_observacao'] != null &&
               record['reg_observacao'].toString().isNotEmpty)
             _buildRecordCard(

@@ -29,7 +29,11 @@ class _ClassSelectionPageState extends State<ClassSelection> {
     try {
       final user = supabase.auth.currentUser;
       if (user == null) return;
-      final dadosUsuario = await supabase.from('usuarios').select('usu_cargo').eq('usu_id', user.id).maybeSingle();
+      final dadosUsuario = await supabase
+          .from('usuarios')
+          .select('usu_cargo')
+          .eq('usu_id', user.id)
+          .maybeSingle();
 
       if (dadosUsuario != null) {
         final int cargoId = dadosUsuario['usu_cargo'] ?? 0;
@@ -40,11 +44,11 @@ class _ClassSelectionPageState extends State<ClassSelection> {
             _isAdmin = true;
             _verificandoCargo = false;
           });
-        // Cuidador
+          // Cuidador
         } else if (cargoId == 1) {
           _isCuidador = true;
           await _turmasDosAlunosCuidador(user.id);
-        // Professor
+          // Professor
         } else {
           setState(() => _verificandoCargo = false);
         }
@@ -60,9 +64,16 @@ class _ClassSelectionPageState extends State<ClassSelection> {
   // Buscar as turmas com os alunos vinculados ao cuidador
   Future<void> _turmasDosAlunosCuidador(String cuidadorId) async {
     try {
-      final List<Map<String, dynamic>> alunosVinculados = await supabase.from('alunos').select('alu_turma').eq('alu_cuidador', cuidadorId);
+      final List<Map<String, dynamic>> alunosVinculados = await supabase
+          .from('alunos')
+          .select('alu_turma')
+          .eq('alu_cuidador', cuidadorId);
 
-      final ids = alunosVinculados.map((aluno) => aluno['alu_turma'] as int?).whereType<int>().toSet().toList();
+      final ids = alunosVinculados
+          .map((aluno) => aluno['alu_turma'] as int?)
+          .whereType<int>()
+          .toSet()
+          .toList();
 
       setState(() {
         _idsTurmasCuidador = ids;
@@ -79,24 +90,31 @@ class _ClassSelectionPageState extends State<ClassSelection> {
     final user = supabase.auth.currentUser;
 
     if (_verificandoCargo) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Minhas Turmas"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Minhas Turmas"), centerTitle: true),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: () {
           if (_isAdmin) {
-            return supabase.from('turmas_do_professor').stream(primaryKey: ['tur_id']).order('tur_numero', ascending: true);
+            return supabase
+                .from('turmas_do_professor')
+                .stream(primaryKey: ['tur_id'])
+                .order('tur_numero', ascending: true);
           } else if (_isCuidador) {
-            return supabase.from('turmas_do_professor').stream(primaryKey: ['tur_id']).inFilter('tur_id', _idsTurmasCuidador.isNotEmpty ? _idsTurmasCuidador : [-1]);
+            return supabase
+                .from('turmas_do_professor')
+                .stream(primaryKey: ['tur_id'])
+                .inFilter(
+                  'tur_id',
+                  _idsTurmasCuidador.isNotEmpty ? _idsTurmasCuidador : [-1],
+                );
           } else {
-            return supabase.from('turmas_do_professor').stream(primaryKey: ['tur_id']).eq('tur_professor', user!.id);
+            return supabase
+                .from('turmas_do_professor')
+                .stream(primaryKey: ['tur_id'])
+                .eq('tur_professor', user!.id);
           }
         }(),
         builder: (context, snapshot) {
@@ -105,7 +123,9 @@ class _ClassSelectionPageState extends State<ClassSelection> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text("Erro ao carregar turmas: ${snapshot.error}"));
+            return Center(
+              child: Text("Erro ao carregar turmas: ${snapshot.error}"),
+            );
           }
 
           final turmas = snapshot.data ?? [];
@@ -136,13 +156,20 @@ class _ClassSelectionPageState extends State<ClassSelection> {
                   itemCount: turmas.length,
                   itemBuilder: (context, index) {
                     final turma = turmas[index];
-                    final String numeroTurma = turma['tur_numero']?.toString() ?? 'S/N';
-                    final String numeroAno = turma['ano_numero']?.toString() ?? turma['tur_ano']?.toString() ?? '-';
-                    final String nomeEscola = turma['esc_nome'] ?? 'Escola Geral';
+                    final String numeroTurma =
+                        turma['tur_numero']?.toString() ?? 'S/N';
+                    final String numeroAno =
+                        turma['ano_numero']?.toString() ??
+                        turma['tur_ano']?.toString() ??
+                        '-';
+                    final String nomeEscola =
+                        turma['esc_nome'] ?? 'Escola Geral';
                     return Card(
                       elevation: 3,
                       margin: const EdgeInsets.only(bottom: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(16),
                         leading: const CircleAvatar(
@@ -151,7 +178,10 @@ class _ClassSelectionPageState extends State<ClassSelection> {
                         ),
                         title: Text(
                           "Turma $numeroTurma",
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         subtitle: Text("$numeroAnoº Ano - $nomeEscola"),
                         trailing: const Icon(Icons.arrow_forward_ios),
@@ -207,4 +237,3 @@ class _ClassSelectionPageState extends State<ClassSelection> {
     );
   }
 }
-

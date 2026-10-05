@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:tea_agenda/data/repositories/usuarios_repository.dart';
 
 class CalendarController extends GetxController {
   final supabase = Supabase.instance.client;
@@ -39,6 +40,10 @@ class CalendarController extends GetxController {
       ''')
           .eq('reg_aluno', alunoId);
 
+      final nomesAssinantes = await UsuariosRepository().obterNomesPorIds(
+        data.map((registro) => registro['reg_usuario']),
+      );
+
       final tabelas = [
         'registro_comportamento',
         'reg_comportamento',
@@ -69,6 +74,10 @@ class CalendarController extends GetxController {
       selectedRecord = null;
 
       for (var reg in data) {
+        final usuarioId = reg['reg_usuario']?.toString();
+        reg['assinante_nome'] = usuarioId == null
+            ? null
+            : nomesAssinantes[usuarioId];
         final date = DateTime.parse(reg['reg_created_at']);
         final regId = reg['reg_id'] as int;
         final listaComportamentos = comportamentosPorRegistro[regId] ?? [];

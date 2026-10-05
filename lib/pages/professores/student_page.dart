@@ -4,6 +4,7 @@ import 'package:tea_agenda/pages/functions/calendar_page.dart';
 import 'package:tea_agenda/pages/functions/reports.dart';
 import 'package:tea_agenda/widgets/bottom_nav_bar.dart';
 import 'package:tea_agenda/pages/functions/add_page.dart';
+import 'package:tea_agenda/data/repositories/usuarios_repository.dart';
 
 class StudentPage extends StatefulWidget {
   final String name;
@@ -86,6 +87,7 @@ class _StudentPageState extends State<StudentPage> {
 
   Future<List<Map<String, dynamic>>> _fetchFeedRecords() async {
     final supabase = Supabase.instance.client;
+    final usuariosRepo = UsuariosRepository();
 
     final dados = await supabase
         .from('registros')
@@ -97,10 +99,18 @@ class _StudentPageState extends State<StudentPage> {
         .eq('reg_aluno', widget.alunoId)
         .order('reg_created_at', ascending: false);
 
+    final nomesAssinantes = await usuariosRepo.obterNomesPorIds(
+      dados.map((registro) => registro['reg_usuario']),
+    );
+
     final comportamentosPorRegistro =
         await _carregarComportamentosPorRegistro();
 
     for (final registro in dados) {
+      final usuarioId = registro['reg_usuario']?.toString();
+      registro['assinante_nome'] = usuarioId == null
+          ? null
+          : nomesAssinantes[usuarioId];
       final regId = registro['reg_id'] as int;
       final lista = comportamentosPorRegistro[regId] ?? [];
       registro['comportamentos'] = lista;
@@ -267,6 +277,25 @@ class _StudentPageState extends State<StudentPage> {
               ),
             ],
           ),
+          if ((registro['assinante_nome'] ?? '').toString().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.draw, size: 15, color: Colors.blueGrey),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    'Assinado por ${registro['assinante_nome']}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.blueGrey,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,

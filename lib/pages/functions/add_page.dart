@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tea_agenda/data/repositories/usuarios_repository.dart';
 
 class AddPage extends StatefulWidget {
   final int alunoId;
@@ -20,8 +21,10 @@ class AddPage extends StatefulWidget {
 
 class _AddPageState extends State<AddPage> {
   final supabase = Supabase.instance.client;
+  final _usuariosRepo = UsuariosRepository();
   final TextEditingController _observationController = TextEditingController();
   File? _imagemSelecionada;
+  String? _nomeAssinante;
 
   bool _alunoFaltou = false;
   int? _idAlimentacao;
@@ -42,6 +45,7 @@ class _AddPageState extends State<AddPage> {
   }
 
   void _inicializarFormulario() {
+    _carregarAssinante();
     if (widget.registroDia != null) {
       final reg = widget.registroDia!;
 
@@ -56,6 +60,14 @@ class _AddPageState extends State<AddPage> {
       _carregarComportamentosRelacionados();
     }
     _carregarDados();
+  }
+
+  Future<void> _carregarAssinante() async {
+    final perfil = await _usuariosRepo.obterusUarioLogado();
+    if (!mounted) return;
+    setState(() {
+      _nomeAssinante = perfil?['usu_nome']?.toString();
+    });
   }
 
   Future<void> _carregarDados() async {
@@ -114,6 +126,7 @@ class _AddPageState extends State<AddPage> {
 
     final registroDados = {
       'reg_aluno': widget.alunoId,
+      'reg_usuario': supabase.auth.currentUser?.id,
       'reg_falta': _alunoFaltou,
       'reg_alimentacao': _alunoFaltou ? null : _idAlimentacao,
       'reg_atividade': _alunoFaltou ? null : _idAtividade,
@@ -308,6 +321,23 @@ class _AddPageState extends State<AddPage> {
     }
   }
 
+  String _nomeHumor(int humorId) {
+    switch (humorId) {
+      case 1:
+        return 'Precisa de apoio';
+      case 2:
+        return 'Em adaptação';
+      case 3:
+        return 'Regular';
+      case 4:
+        return 'Bem';
+      case 5:
+        return 'Muito bem';
+      default:
+        return 'Não informado';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_carregando) return const Center(child: CircularProgressIndicator());
@@ -351,6 +381,24 @@ class _AddPageState extends State<AddPage> {
                 'Avaliação do dia - $dataFormatada',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
+              if (_nomeAssinante?.isNotEmpty == true) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.draw, size: 18, color: Colors.blueGrey),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Assinando como: $_nomeAssinante',
+                        style: const TextStyle(
+                          color: Colors.blueGrey,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 16),
 
               Container(
@@ -474,17 +522,38 @@ class _AddPageState extends State<AddPage> {
                       const SizedBox(height: 16),
 
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           for (int i = 1; i <= 5; i++)
-                            GestureDetector(
-                              onTap: () => setState(() => _idHumor = i),
-                              child: Icon(
-                                Icons.face,
-                                size: 45,
-                                color: i <= _idHumor
-                                    ? _corHumor(_idHumor)
-                                    : Colors.grey[300],
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _idHumor = i),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.face,
+                                      size: 40,
+                                      color: i <= _idHumor
+                                          ? _corHumor(_idHumor)
+                                          : Colors.grey[300],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _nomeHumor(i),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: i == _idHumor
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                        color: i == _idHumor
+                                            ? _corHumor(i)
+                                            : Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                         ],

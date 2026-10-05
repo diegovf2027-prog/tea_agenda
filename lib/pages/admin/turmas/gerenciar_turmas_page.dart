@@ -13,15 +13,13 @@ class GerenciarTurmasPage extends StatefulWidget {
 class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
   final TextEditingController _searchController = TextEditingController();
   String _filtro = '';
-  
+
   final supabase = Supabase.instance.client;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Gerenciar Turmas"),
-      ),
+      appBar: AppBar(title: const Text("Gerenciar Turmas")),
       body: Column(
         children: [
           // Filtro
@@ -48,7 +46,10 @@ class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
           // Lista de Turmas
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: supabase.from('turmas_com_detalhes').stream(primaryKey: ['tur_id']).order('tur_numero'),
+              stream: supabase
+                  .from('turmas_com_detalhes')
+                  .stream(primaryKey: ['tur_id'])
+                  .order('tur_numero'),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -72,23 +73,75 @@ class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
                   itemCount: filtradas.length,
                   itemBuilder: (context, index) {
                     final turma = filtradas[index];
-                    String subtitulo = "${turma['ano_descricao']}º Ano - ${turma['escola_nome']}";
+                    String subtitulo =
+                        "${turma['ano_descricao']}º Ano - ${turma['escola_nome']}";
+                    final turno = turma['turno_nome']?.toString().trim() ?? '';
+                    final turnoExibicao = turno.isEmpty
+                        ? 'Turno não informado'
+                        : '${turno[0].toUpperCase()}${turno.substring(1).toLowerCase()}';
                     return Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 4,
                       ),
                       child: ListTile(
-                        leading: const Icon(Icons.door_front_door, color: Colors.blue),
+                        leading: const Icon(
+                          Icons.door_front_door,
+                          color: Colors.blue,
+                        ),
                         title: Text("Turma: ${turma['tur_numero']}"),
-                        subtitle: Text(subtitulo),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(subtitulo),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.schedule,
+                                  size: 15,
+                                  color: Colors.blueGrey,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  turnoExibicao,
+                                  style: const TextStyle(
+                                    color: Colors.blueGrey,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.person_outline,
+                                  size: 15,
+                                  color: Colors.blueGrey,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    'Professora: ${turma['professor_nome'] ?? 'Não atribuída'}',
+                                    style: const TextStyle(
+                                      color: Colors.blueGrey,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                         trailing: IconButton(
                           icon: const Icon(Icons.edit, size: 20),
                           onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AdicionarTurmaPage(turmaEdicao : turma),
+                                builder: (context) =>
+                                    AdicionarTurmaPage(turmaEdicao: turma),
                               ),
                             );
                           },
@@ -97,8 +150,9 @@ class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => DetalhesTurmaPage(turma: turma),
-                            )
+                              builder: (context) =>
+                                  DetalhesTurmaPage(turma: turma),
+                            ),
                           );
                         },
                       ),
@@ -114,9 +168,7 @@ class _GerenciarTurmasPageState extends State<GerenciarTurmasPage> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => AdicionarTurmaPage(),
-            ),
+            MaterialPageRoute(builder: (context) => AdicionarTurmaPage()),
           );
         },
         label: const Text("Nova Turma"),
