@@ -37,7 +37,6 @@ flutter_*.ico
 flutter_*.bmp
 flutter_*.svg
 coverage/
-lib/generated_plugin_registrant.dart
 # Symbolication related
 app.*.symbols
 

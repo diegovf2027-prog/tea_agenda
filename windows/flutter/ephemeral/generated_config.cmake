@@ -15,10 +15,10 @@ list(APPEND FLUTTER_TOOL_ENVIRONMENT
   "FLUTTER_ROOT=C:\\Users\\Diego\\develop\\flutter"
   "FLUTTER_EPHEMERAL_DIR=C:\\Users\\Diego\\Projetos Flutter\\Dev\\tea_agenda\\windows\\flutter\\ephemeral"
   "PROJECT_DIR=C:\\Users\\Diego\\Projetos Flutter\\Dev\\tea_agenda"
-  "FLUTTER_TARGET=C:\\Users\\Diego\\Projetos Flutter\\Dev\\tea_agenda\\lib\\main.dart"
+  "FLUTTER_TARGET=lib\\main.dart"
   "DART_DEFINES=RkxVVFRFUl9WRVJTSU9OPTMuNDEuNg==,RkxVVFRFUl9DSEFOTkVMPXN0YWJsZQ==,RkxVVFRFUl9HSVRfVVJMPWh0dHBzOi8vZ2l0aHViLmNvbS9mbHV0dGVyL2ZsdXR0ZXIuZ2l0,RkxVVFRFUl9GUkFNRVdPUktfUkVWSVNJT049ZGI1MGUyMDE2OA==,RkxVVFRFUl9FTkdJTkVfUkVWSVNJT049NDI1Y2ZiNTRkMA==,RkxVVFRFUl9EQVJUX1ZFUlNJT049My4xMS40"
   "DART_OBFUSCATION=false"
   "TRACK_WIDGET_CREATION=true"
-  "TREE_SHAKE_ICONS=false"
+  "TREE_SHAKE_ICONS=true"
   "PACKAGE_CONFIG=C:\\Users\\Diego\\Projetos Flutter\\Dev\\tea_agenda\\.dart_tool\\package_config.json"
 )
