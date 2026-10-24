@@ -21,6 +21,24 @@ class UsuariosRepository {
     }
   }
 
+  Future<bool> deveTrocarSenhaNoPrimeiroAcesso() async {
+    final user = supabase.auth.currentUser;
+
+    if (user == null) return false;
+
+    final perfil = await supabase
+        .from('usuarios')
+        .select('usu_trocar_senha')
+        .eq('usu_id', user.id)
+        .maybeSingle();
+
+    return perfil?['usu_trocar_senha'] == true;
+  }
+
+  Future<void> concluirTrocaSenhaNoPrimeiroAcesso() async {
+    await supabase.rpc('concluir_troca_senha_primeiro_acesso');
+  }
+
   Future<Map<String, String>> obterNomesPorIds(Iterable<dynamic> ids) async {
     final idsUnicos = ids
         .where((id) => id != null)

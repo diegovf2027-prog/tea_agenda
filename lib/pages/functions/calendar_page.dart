@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:tea_agenda/pages/functions/add_page.dart';
 import 'package:tea_agenda/pages/functions/calendar_controller.dart';
@@ -208,7 +209,7 @@ class CalendarPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                _buildAgendaDetails(controller),
+                _buildAgendaDetails(context, controller),
               ],
             ),
           );
@@ -217,7 +218,104 @@ class CalendarPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAgendaDetails(CalendarController controller) {
+  Future<void> _excluirRegistro(
+    BuildContext context,
+    CalendarController controller,
+    Map<String, dynamic> record,
+  ) async {
+    final registroId = record['reg_id'];
+    if (registroId == null) return;
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Apagar registro'),
+        content: const Text(
+          'Deseja realmente apagar este registro do calendário?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Apagar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      final supabase = Supabase.instance.client;
+      const tabelasComportamento = [
+        'registro_comportamento',
+        'reg_comportamento',
+        'registros_comportamentos',
+        'registro_comportamentos',
+      ];
+      String? tabelaComportamento;
+
+      for (final tabela in tabelasComportamento) {
+        try {
+          await supabase.from(tabela).select('reg_id').limit(1);
+          tabelaComportamento = tabela;
+          break;
+        } on PostgrestException catch (e) {
+          if (e.code != 'PGRST205' && e.code != '42P01') rethrow;
+        }
+      }
+
+      if (tabelaComportamento != null) {
+        await supabase
+            .from(tabelaComportamento)
+            .delete()
+            .eq('reg_id', registroId);
+      }
+
+      final registrosExcluidos = await supabase
+          .from('registros')
+          .delete()
+          .eq('reg_id', registroId)
+          .select('reg_id');
+
+      if (registrosExcluidos.isEmpty) {
+        throw Exception(
+          'Nenhum registro foi apagado. Verifique a política de exclusão (RLS) no Supabase.',
+        );
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Registro apagado com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      controller.selectedRecord = null;
+      controller.update(['calendario', 'agenda']);
+      await controller.fetchRecords();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao apagar o registro: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildAgendaDetails(
+    BuildContext context,
+    CalendarController controller,
+  ) {
     final record = controller.selectedRecord;
 
     if (record == null) {
@@ -298,36 +396,60 @@ class CalendarPage extends StatelessWidget {
               iconColor: Colors.blue,
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  await Get.to(
-                    () => AddPage(
-                      alunoId: alunoId,
-                      registroDia: record,
-                      dataSelecionada: controller.selectedDay,
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      await Get.to(
+                        () => AddPage(
+                          alunoId: alunoId,
+                          registroDia: record,
+                          dataSelecionada: controller.selectedDay,
+                        ),
+                      );
+                      controller.fetchRecords();
+                    },
+                    icon: const Icon(Icons.edit, color: Colors.white),
+                    label: const Text(
+                      'Editar',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  );
-                  controller.fetchRecords();
-                },
-                icon: const Icon(Icons.edit, color: Colors.white),
-                label: const Text(
-                  'Editar Registro',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () =>
+                        _excluirRegistro(context, controller, record),
+                    icon: const Icon(Icons.delete_outline, color: Colors.white),
+                    label: const Text(
+                      'Apagar',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -386,37 +508,61 @@ class CalendarPage extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                await Get.to(
-                  () => AddPage(
-                    alunoId: alunoId,
-                    registroDia: record,
-                    dataSelecionada: controller.selectedDay,
-                  ),
-                );
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    await Get.to(
+                      () => AddPage(
+                        alunoId: alunoId,
+                        registroDia: record,
+                        dataSelecionada: controller.selectedDay,
+                      ),
+                    );
 
-                controller.fetchRecords();
-              },
-              icon: const Icon(Icons.edit, color: Colors.white),
-              label: const Text(
-                'Editar Registro',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                    controller.fetchRecords();
+                  },
+                  icon: const Icon(Icons.edit, color: Colors.white),
+                  label: const Text(
+                    'Editar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () =>
+                      _excluirRegistro(context, controller, record),
+                  icon: const Icon(Icons.delete_outline, color: Colors.white),
+                  label: const Text(
+                    'Apagar',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),

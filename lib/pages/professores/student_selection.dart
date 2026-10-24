@@ -5,11 +5,24 @@ import 'package:tea_agenda/pages/professores/student_page.dart';
 class StudentSelection extends StatelessWidget {
   final int? turmaId;
   final String? turmaNome;
-  const StudentSelection({super.key, this.turmaId, this.turmaNome});
+  final String? cuidadorId;
+  const StudentSelection({
+    super.key,
+    this.turmaId,
+    this.turmaNome,
+    this.cuidadorId,
+  });
 
   @override
   Widget build(BuildContext context) {
     final supabase = Supabase.instance.client;
+    final alunosQuery = supabase
+        .from('alunos')
+        .select()
+        .eq('alu_turma', turmaId ?? 0);
+    final Future<List<Map<String, dynamic>>> alunosFuture = cuidadorId == null
+        ? alunosQuery.order('alu_nome')
+        : alunosQuery.eq('alu_cuidador', cuidadorId!).order('alu_nome');
 
     return Scaffold(
       appBar: AppBar(title: const Text('Selecione o Aluno'), centerTitle: true),
@@ -19,15 +32,17 @@ class StudentSelection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: supabase.from('alunos').stream(primaryKey: ['alu_id']).eq('alu_turma', turmaId ?? 0).order('alu_nome'),
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: alunosFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
                   if (snapshot.hasError) {
-                    return Center(child: Text("Erro ao carregar alunos: ${snapshot.error}"));
+                    return Center(
+                      child: Text("Erro ao carregar alunos: ${snapshot.error}"),
+                    );
                   }
 
                   final alunos = snapshot.data ?? [];
@@ -95,4 +110,3 @@ class StudentSelection extends StatelessWidget {
     );
   }
 }
-

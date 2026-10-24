@@ -1,11 +1,12 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:excel/excel.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ReportsPage extends StatefulWidget {
   final int alunoId;
@@ -325,23 +326,61 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Future<void> _generateAndPreviewPdf(List<Map<String, dynamic>> dados) async {
+    if (kIsWeb) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'A visualização do PDF não é suportada no navegador. Use o app em Android/iOS/desktop.',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _gerando = true);
     try {
       final file = await _gerarPDF(dados);
-      await OpenFilex.open(file.path);
+
+      if (!await file.exists()) {
+        throw Exception('O arquivo PDF não foi gerado corretamente.');
+      }
+
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done) {
+        await Share.shareXFiles([XFile(file.path)], text: 'Relatório em PDF');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao visualizar o PDF: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao visualizar o PDF: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       setState(() => _gerando = false);
     }
   }
 
   Future<void> _generateAndDownloadPdf(List<Map<String, dynamic>> dados) async {
+    if (kIsWeb) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'O download do PDF não é suportado no navegador. Use o app em Android/iOS/desktop.',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _gerando = true);
     try {
       final file = await _gerarPDF(dados, saveInDocuments: true);
@@ -366,17 +405,41 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _generateAndPreviewExcel(
     List<Map<String, dynamic>> dados,
   ) async {
+    if (kIsWeb) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'A visualização do Excel não é suportada no navegador. Use o app em Android/iOS/desktop.',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _gerando = true);
     try {
       final file = await _gerarExcel(dados);
-      await OpenFilex.open(file.path);
+
+      if (!await file.exists()) {
+        throw Exception('O arquivo Excel não foi gerado corretamente.');
+      }
+
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done) {
+        await Share.shareXFiles([XFile(file.path)], text: 'Relatório em Excel');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao visualizar o Excel: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao visualizar o Excel: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       setState(() => _gerando = false);
     }
@@ -385,6 +448,20 @@ class _ReportsPageState extends State<ReportsPage> {
   Future<void> _generateAndDownloadExcel(
     List<Map<String, dynamic>> dados,
   ) async {
+    if (kIsWeb) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'O download do Excel não é suportado no navegador. Use o app em Android/iOS/desktop.',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _gerando = true);
     try {
       final file = await _gerarExcel(dados, saveInDocuments: true);
@@ -404,6 +481,15 @@ class _ReportsPageState extends State<ReportsPage> {
     } finally {
       setState(() => _gerando = false);
     }
+  }
+
+  Future<Directory> _obterDiretorioRelatorio({
+    required bool saveInDocuments,
+  }) async {
+    final baseDir = Directory.systemTemp;
+    final dir = Directory('${baseDir.path}/tea_agenda_relatorios');
+    await dir.create(recursive: true);
+    return dir;
   }
 
   Future<File> _gerarExcel(
@@ -466,9 +552,9 @@ class _ReportsPageState extends State<ReportsPage> {
     }
 
     final fileBytes = excel.save();
-    final directory = saveInDocuments
-        ? await getApplicationDocumentsDirectory()
-        : await getTemporaryDirectory();
+    final directory = await _obterDiretorioRelatorio(
+      saveInDocuments: saveInDocuments,
+    );
     final file = File(
       '${directory.path}/relatorio_aluno_${widget.alunoId}.xlsx',
     );
@@ -619,9 +705,9 @@ class _ReportsPageState extends State<ReportsPage> {
       ),
     );
 
-    final directory = saveInDocuments
-        ? await getApplicationDocumentsDirectory()
-        : await getTemporaryDirectory();
+    final directory = await _obterDiretorioRelatorio(
+      saveInDocuments: saveInDocuments,
+    );
     final file = File(
       '${directory.path}/relatorio_aluno_${widget.alunoId}.pdf',
     );

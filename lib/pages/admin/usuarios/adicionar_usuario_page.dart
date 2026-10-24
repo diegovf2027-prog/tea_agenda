@@ -113,6 +113,7 @@ class _AdicionarUsuarioPageState extends State<AdicionarUsuarioPage> {
               'usu_dt_nascimento': _dataNascimento!.toIso8601String(),
               'usu_cargo': _cargoIdSelecionado,
               'usu_escola': _escolaIdSelecionada,
+              'usu_trocar_senha': true,
             });
           }
         }

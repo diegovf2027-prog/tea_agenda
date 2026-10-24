@@ -30,25 +30,23 @@ class _ClassSelectionPageState extends State<ClassSelection> {
       final user = supabase.auth.currentUser;
       if (user == null) return;
       final dadosUsuario = await supabase
-          .from('usuarios')
-          .select('usu_cargo')
+          .from('usuarios_com_cargos')
+          .select('cargo_nome')
           .eq('usu_id', user.id)
           .maybeSingle();
 
       if (dadosUsuario != null) {
-        final int cargoId = dadosUsuario['usu_cargo'] ?? 0;
+        final cargoNome =
+            dadosUsuario['cargo_nome']?.toString().trim().toUpperCase() ?? '';
 
-        // Administrador
-        if (cargoId == 4) {
+        if (cargoNome.startsWith('ADMINISTRADOR')) {
           setState(() {
             _isAdmin = true;
             _verificandoCargo = false;
           });
-          // Cuidador
-        } else if (cargoId == 1) {
+        } else if (cargoNome.startsWith('CUIDADOR')) {
           _isCuidador = true;
           await _turmasDosAlunosCuidador(user.id);
-          // Professor
         } else {
           setState(() => _verificandoCargo = false);
         }
@@ -192,6 +190,7 @@ class _ClassSelectionPageState extends State<ClassSelection> {
                               builder: (context) => StudentSelection(
                                 turmaId: turma['tur_id'],
                                 turmaNome: numeroTurma,
+                                cuidadorId: _isCuidador ? user?.id : null,
                               ),
                             ),
                           );

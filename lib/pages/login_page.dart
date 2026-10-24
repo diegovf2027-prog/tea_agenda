@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tea_agenda/data/repositories/usuarios_repository.dart';
+import 'package:tea_agenda/pages/alterar_senha_page.dart';
 import 'package:tea_agenda/pages/admin/escolha_admin_page.dart';
 import 'package:tea_agenda/pages/professores/class_selection.dart';
 
@@ -42,6 +43,21 @@ class _LoginPageState extends State<LoginPage> {
         if (!mounted) return;
 
         if (perfil != null) {
+          final deveTrocarSenha = await _usuariosRepo
+              .deveTrocarSenhaNoPrimeiroAcesso();
+
+          if (!mounted) return;
+
+          if (deveTrocarSenha) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AlterarSenhaPage(perfil: perfil),
+              ),
+            );
+            return;
+          }
+
           final String cargo =
               perfil['cargo_nome']?.toString().toUpperCase() ?? '';
           if (cargo == 'ADMINISTRADOR' ||
@@ -65,12 +81,23 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message), backgroundColor: Colors.red),
       );
+    } on PostgrestException catch (e) {
+      if (!mounted) return;
+
+      final mensagem = e.code == '42703' || e.code == 'PGRST204'
+          ? 'A configuração do primeiro acesso está incompleta no Supabase. '
+                'Aplique a migração de troca de senha e tente novamente.'
+          : 'Erro ao consultar os dados do usuário no Supabase: ${e.message}';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(mensagem), backgroundColor: Colors.red),
+      );
     } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Erro ao conectar ao servidor.'),
+          content: Text('Não foi possível concluir o login. Tente novamente.'),
           backgroundColor: Colors.red,
         ),
       );
