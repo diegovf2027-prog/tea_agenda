@@ -193,6 +193,11 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => _gerando = true);
 
     try {
+      final dataInicioFiltro = DateTime(
+        _startDate.year,
+        _startDate.month,
+        _startDate.day,
+      );
       final dataFimFiltro = DateTime(
         _endDate.year,
         _endDate.month,
@@ -200,9 +205,10 @@ class _ReportsPageState extends State<ReportsPage> {
         23,
         59,
         59,
+        999,
       );
 
-      var query = supabase
+      final query = supabase
           .from('registros')
           .select('''
         *,
@@ -211,20 +217,25 @@ class _ReportsPageState extends State<ReportsPage> {
         atividades:reg_atividade(ati_status)
       ''')
           .eq('reg_aluno', widget.alunoId)
-          .gte('reg_created_at', _startDate.toIso8601String())
+          .gte('reg_created_at', dataInicioFiltro.toIso8601String())
           .lte('reg_created_at', dataFimFiltro.toIso8601String());
 
-      if (_humorSelecionado.isNotEmpty) {
-        query = query.inFilter('reg_humor', _humorSelecionado);
-      }
-
-      final finalQuery = query.order('reg_created_at', ascending: true);
-
-      final List<Map<String, dynamic>> dados = await finalQuery;
+      final List<Map<String, dynamic>> todosDados = await query.order(
+        'reg_created_at',
+        ascending: true,
+      );
+      final dados = _humorSelecionado.isEmpty
+          ? todosDados
+          : todosDados
+                .where(
+                  (registro) =>
+                      _humorSelecionado.contains(registro['reg_humor']),
+                )
+                .toList();
       final comportamentosPorRegistro =
           await _carregarComportamentosPorRegistro();
 
-      for (final registro in dados) {
+      for (final registro in todosDados) {
         final regId = registro['reg_id'] as int;
         final lista = comportamentosPorRegistro[regId] ?? [];
         registro['comportamentos'] = lista;
@@ -244,7 +255,7 @@ class _ReportsPageState extends State<ReportsPage> {
         return;
       }
 
-      await _showReportOptions(dados);
+      await _showReportOptions(dados, todosDados);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -257,7 +268,10 @@ class _ReportsPageState extends State<ReportsPage> {
     }
   }
 
-  Future<void> _showReportOptions(List<Map<String, dynamic>> dados) async {
+  Future<void> _showReportOptions(
+    List<Map<String, dynamic>> dados,
+    List<Map<String, dynamic>> todosDados,
+  ) async {
     final format = _shareFormat;
     final selected = await showModalBottomSheet<String>(
       context: context,
@@ -312,20 +326,23 @@ class _ReportsPageState extends State<ReportsPage> {
 
     if (selected == 'preview') {
       if (format == 'pdf') {
-        await _generateAndPreviewPdf(dados);
+        await _generateAndPreviewPdf(dados, todosDados);
       } else {
         await _generateAndPreviewExcel(dados);
       }
     } else if (selected == 'download') {
       if (format == 'pdf') {
-        await _generateAndDownloadPdf(dados);
+        await _generateAndDownloadPdf(dados, todosDados);
       } else {
         await _generateAndDownloadExcel(dados);
       }
     }
   }
 
-  Future<void> _generateAndPreviewPdf(List<Map<String, dynamic>> dados) async {
+  Future<void> _generateAndPreviewPdf(
+    List<Map<String, dynamic>> dados,
+    List<Map<String, dynamic>> todosDados,
+  ) async {
     if (kIsWeb) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -342,7 +359,7 @@ class _ReportsPageState extends State<ReportsPage> {
 
     setState(() => _gerando = true);
     try {
-      final file = await _gerarPDF(dados);
+      final file = await _gerarPDF(dados, todosDados);
 
       if (!await file.exists()) {
         throw Exception('O arquivo PDF não foi gerado corretamente.');
@@ -366,7 +383,10 @@ class _ReportsPageState extends State<ReportsPage> {
     }
   }
 
-  Future<void> _generateAndDownloadPdf(List<Map<String, dynamic>> dados) async {
+  Future<void> _generateAndDownloadPdf(
+    List<Map<String, dynamic>> dados,
+    List<Map<String, dynamic>> todosDados,
+  ) async {
     if (kIsWeb) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -383,7 +403,7 @@ class _ReportsPageState extends State<ReportsPage> {
 
     setState(() => _gerando = true);
     try {
-      final file = await _gerarPDF(dados, saveInDocuments: true);
+      final file = await _gerarPDF(dados, todosDados, saveInDocuments: true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('PDF salvo em: ${file.path}'),
@@ -578,11 +598,66 @@ class _ReportsPageState extends State<ReportsPage> {
 
   // Relatório em PDF
   Future<File> _gerarPDF(
-    List<Map<String, dynamic>> dados, {
+    List<Map<String, dynamic>> dados,
+    List<Map<String, dynamic>> todosDados, {
     bool saveInDocuments = false,
   }) async {
     final pdf = pw.Document();
     final agrupado = _agruparPorData(dados);
+    final dadosAluno = await _carregarDadosAlunoRelatorio();
+    final diasPorHumor = _contarDiasPorHumor(todosDados);
+    final diasDeFalta = _contarDiasDeFalta(todosDados);
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(48),
+        build: (context) => pw.Center(
+          child: pw.Column(
+            mainAxisAlignment: pw.MainAxisAlignment.center,
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              pw.Text(
+                'TEAgenda',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  color: PdfColors.blue700,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 24),
+              pw.Text(
+                'Relatório de Acompanhamento',
+                textAlign: pw.TextAlign.center,
+                style: pw.TextStyle(
+                  fontSize: 24,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 8),
+              pw.Text(
+                'Período: ${_formatDate(_startDate)} até ${_formatDate(_endDate)}',
+                textAlign: pw.TextAlign.center,
+                style: const pw.TextStyle(
+                  fontSize: 12,
+                  color: PdfColors.grey700,
+                ),
+              ),
+              pw.SizedBox(height: 40),
+              pw.Divider(color: PdfColors.blue700),
+              pw.SizedBox(height: 20),
+              _linhaCapa('Aluno', dadosAluno['aluno'] as String),
+              _linhaCapa('Turma', dadosAluno['turma'] as String),
+              _linhaCapa('Professor', dadosAluno['professor'] as String),
+              _linhaCapa('Cuidador', dadosAluno['cuidador'] as String),
+              pw.SizedBox(height: 20),
+              pw.Divider(color: PdfColors.blue700),
+            ],
+          ),
+        ),
+      ),
+    );
 
     pdf.addPage(
       pw.MultiPage(
@@ -700,6 +775,26 @@ class _ReportsPageState extends State<ReportsPage> {
             widgets.add(pw.SizedBox(height: 16));
           }
 
+          widgets.add(pw.Header(level: 1, child: pw.Text('Resumo do período')));
+          widgets.add(
+            pw.TableHelper.fromTextArray(
+              headers: ['Status de humor', 'Dias'],
+              data: [
+                for (var humor = 1; humor <= 5; humor++)
+                  [_textoHumor(humor), '${diasPorHumor[humor] ?? 0}'],
+              ],
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              cellAlignment: pw.Alignment.centerLeft,
+            ),
+          );
+          widgets.add(pw.SizedBox(height: 12));
+          widgets.add(
+            pw.Text(
+              'Dias de falta: $diasDeFalta',
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+            ),
+          );
+
           return widgets;
         },
       ),
@@ -708,11 +803,119 @@ class _ReportsPageState extends State<ReportsPage> {
     final directory = await _obterDiretorioRelatorio(
       saveInDocuments: saveInDocuments,
     );
+    final geradoEm = DateTime.now().microsecondsSinceEpoch;
     final file = File(
-      '${directory.path}/relatorio_aluno_${widget.alunoId}.pdf',
+      '${directory.path}/relatorio_aluno_${widget.alunoId}_$geradoEm.pdf',
     );
     await file.writeAsBytes(await pdf.save());
     return file;
+  }
+
+  pw.Widget _linhaCapa(String titulo, String valor) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 10),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.SizedBox(
+            width: 100,
+            child: pw.Text(
+              '$titulo:',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+          ),
+          pw.Expanded(child: pw.Text(valor)),
+        ],
+      ),
+    );
+  }
+
+  Future<Map<String, String>> _carregarDadosAlunoRelatorio() async {
+    final aluno = await supabase
+        .from('alunos')
+        .select()
+        .eq('alu_id', widget.alunoId)
+        .maybeSingle();
+
+    if (aluno == null) {
+      throw StateError('Aluno ${widget.alunoId} não encontrado.');
+    }
+
+    final turmaId = aluno['alu_turma'];
+    final turma = turmaId == null
+        ? null
+        : await supabase
+              .from('turmas_com_detalhes')
+              .select(
+                'tur_id, tur_numero, turno_nome, professor_nome',
+              )
+              .eq('tur_id', turmaId)
+              .maybeSingle();
+    final cuidador = await _buscarUsuario(aluno['alu_cuidador']);
+
+    final dadosTurma = <String>[];
+    if (turma != null) {
+      final numero = turma['tur_numero'];
+      final turno = turma['turno_nome'];
+
+      if (numero != null) dadosTurma.add('Turma $numero');
+      if (turno != null) {
+        final turnoFormatado = turno.toString().trim();
+        if (turnoFormatado.isNotEmpty) {
+          dadosTurma.add(
+            '${turnoFormatado[0].toUpperCase()}'
+            '${turnoFormatado.substring(1).toLowerCase()}',
+          );
+        }
+      }
+    }
+
+    return {
+      'aluno': aluno['alu_nome']?.toString() ?? 'Não informado',
+      'turma': dadosTurma.isEmpty ? 'Não vinculada' : dadosTurma.join(' - '),
+      'professor': turma?['professor_nome']?.toString() ?? 'Não atribuído',
+      'cuidador': cuidador?['usu_nome']?.toString() ?? 'Não atribuído',
+    };
+  }
+
+  Future<Map<String, dynamic>?> _buscarUsuario(Object? usuarioId) async {
+    if (usuarioId == null) return null;
+
+    return await supabase
+        .from('usuarios')
+        .select('usu_nome')
+        .eq('usu_id', usuarioId)
+        .maybeSingle();
+  }
+
+  Map<int, int> _contarDiasPorHumor(List<Map<String, dynamic>> registros) {
+    final diasPorHumor = <int, Set<DateTime>>{};
+
+    for (final registro in registros) {
+      final humor = registro['reg_humor'];
+      if (humor is! int || humor < 1 || humor > 5) continue;
+
+      final data = DateTime.parse(registro['reg_created_at']);
+      final dia = DateTime(data.year, data.month, data.day);
+      diasPorHumor.putIfAbsent(humor, () => <DateTime>{}).add(dia);
+    }
+
+    return {
+      for (final entry in diasPorHumor.entries) entry.key: entry.value.length,
+    };
+  }
+
+  int _contarDiasDeFalta(List<Map<String, dynamic>> registros) {
+    final diasDeFalta = <DateTime>{};
+
+    for (final registro in registros) {
+      if (registro['reg_falta'] != true) continue;
+
+      final data = DateTime.parse(registro['reg_created_at']);
+      diasDeFalta.add(DateTime(data.year, data.month, data.day));
+    }
+
+    return diasDeFalta.length;
   }
 
   Future<Map<int, List<String>>> _carregarComportamentosPorRegistro() async {
